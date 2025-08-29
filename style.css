@@ -1,0 +1,336 @@
+/* === Fond & base === */
+body {
+  margin: 0;
+  font-family: "MedievalSharp", cursive;
+  color: #fff;
+  background: url('fond.jpeg') no-repeat center center fixed; /* image locale */
+  background-size: cover;
+  display: flex;
+  overflow: hidden;
+}
+
+/* Titre centré */
+h1 {
+  margin: 10px auto;
+  font-size: 2.5em;
+  text-shadow: 3px 3px #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+/* Sidebar */
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  background: #111;
+  padding: 10px;
+  width: 170px;
+  min-height: 100vh;
+}
+.tab-btn {
+  background: #222;
+  color: #fff;
+  padding: 10px;
+  margin: 5px 0;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: "MedievalSharp", cursive;
+}
+.tab-btn.active { background: #ffd166; color: #222; }
+
+/* Zone principale et ascenseur d’onglets */
+.content {
+  flex: 1;
+  padding: 20px;
+  text-align: center;
+  position: relative;
+}
+.tab-content {
+  display: none;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 15px;
+  padding: 20px;
+  margin: 0 auto;
+  width: 100%;
+  max-height: calc(100vh - 140px); /* ascenseur */
+  overflow-y: auto;                /* ascenseur vertical */
+  box-sizing: border-box;
+}
+.active-tab { display: flex !important; }
+
+/* Onglet Miner : centrage pioche + infos */
+#miner.tab-content {
+  align-items: center;         /* centre horizontalement le bloc miner */
+}
+.miner-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Pioche + nom */
+#pickaxeIconTitle { font-size: 60px; }
+#pickaxe {
+  font-size: 160px;
+  cursor: pointer;
+  user-select: none;
+  transition: transform 0.1s;
+  margin: 10px;
+  text-shadow: 3px 3px #000; /* ombre comme le titre */
+}
+#pickaxe:active { transform: scale(0.9); }
+#pickaxeName {
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 5px;
+  text-shadow: 2px 2px #000;
+}
+
+/* Stats centrées */
+.stats {
+  margin: 15px auto 0;
+  font-size: 18px;
+  background: rgba(0,0,0,0.7);
+  padding: 10px 16px;
+  border-radius: 8px;
+  display: inline-block;
+}
+
+/* Listes d’améliorations en colonne */
+.grid {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  width: 100%;
+  align-items: flex-start;
+}
+
+.upgrade {
+  background: rgba(31,35,56,0.95);
+  padding: 12px;
+  border-radius: 12px;
+  width: 260px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  text-align: left;
+}
+.upgrade button {
+  margin-top: 6px;
+  padding: 8px;
+  border: none;
+  border-radius: 8px;
+  background: #ffd166;
+  color: #222;
+  cursor: pointer;
+  font-weight: bold;
+}
+button:disabled { background: #999; cursor: not-allowed; }
+
+.oreDisplay {
+  font-weight: bold;
+}
+
+/* Casino */
+.casino-container {
+  margin: 0 auto;
+  margin-top: 10px;
+  text-align: center;
+  background: rgba(0,0,0,0.6);
+  padding: 16px;
+  border-radius: 12px;
+  width: 300px;
+}
+#betAmount {
+  padding: 8px;
+  font-size: 16px;
+  border-radius: 8px;
+  border: none;
+  margin-top: 10px;
+  width: 80%;
+  text-align: center;
+}
+#betBtn {
+  margin-top: 10px;
+  padding: 10px 20px;
+  font-weight: bold;
+  border-radius: 8px;
+  background: #ffd166;
+  border: none;
+  cursor: pointer;
+}
+
+/* Mise en colonne des boutons prestige */
+.prestige-actions {
+  display: flex;
+  flex-direction: column; /* ✅ les boutons l’un sous l’autre */
+  gap: 10px;              /* espace entre les boutons */
+  align-items: center;    /* centre les boutons dans la colonne */
+}
+
+.prestige-actions button {
+  background: #222;       /* style sombre */
+  color: #eee;
+  border: 1px solid #444;
+  padding: 10px 15px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.2s;
+  width: 220px;           /* même largeur pour tous */
+}
+
+.prestige-actions button:hover {
+  background: #333;
+  border-color: #666;
+}
+
+/* Debug panel (Shift+D) */
+.debug-panel {
+  position: fixed;
+  right: 12px;
+  top: 12px;
+  background: rgba(0,0,0,0.75);
+  padding: 12px;
+  border-radius: 10px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.5);
+  display: none;
+  z-index: 9999;
+}
+.debug-panel.show { display: block; }
+.debug-panel .debug-title {
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+.debug-panel button {
+  display: block;
+  width: 100%;
+  margin: 6px 0;
+  padding: 8px;
+  border: none;
+  border-radius: 6px;
+  background: #ffd166;
+  color: #222;
+  cursor: pointer;
+  font-weight: bold;
+}
+/* Bloc pioche + stats toujours visible */
+.miner-fixed {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 20px;
+}
+/* === Placement des contenus d'onglets (Boutique, Forge, etc.) === */
+.tab-content {
+  display: none;
+  flex-direction: column;
+  align-items: flex-start; /* aligné à gauche */
+  justify-content: flex-start;
+  position: absolute;
+  top: 60px;   /* pour que ce soit sous le titre */
+  left: 10px; /* espace pour ne pas coller au menu */
+  width: 330px; /* largeur de la colonne */
+  height: calc(100% - 100px);
+  overflow-y: auto; /* ascenseur si trop de contenu */
+}
+
+.active-tab {
+  display: flex !important;
+}
+/* === Style personnalisé de l'ascenseur (scrollbar) === */
+.tab-content::-webkit-scrollbar {
+  width: 12px; /* largeur de la barre */
+}
+
+.tab-content::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.6); /* fond sombre */
+  border-radius: 8px;
+}
+
+.tab-content::-webkit-scrollbar-thumb {
+  background: #444; /* jaune comme les boutons */
+  border-radius: 8px;
+  border: 2px solid #222; /* petit contour sombre */
+}
+
+.tab-content::-webkit-scrollbar-thumb:hover {
+  background: #ffae00; /* plus doré au survol */
+}
+/* === Debug Panel === */
+#debugPanel {
+  position: fixed;
+  bottom: 10px;
+  right: 10px;
+  background: rgba(0,0,0,0.85);
+  padding: 10px;
+  border-radius: 8px;
+  color: #fff;
+  font-family: "MedievalSharp", cursive;
+  z-index: 999;
+}
+
+#debugPanel h3 {
+  margin: 0 0 10px 0;
+  font-size: 16px;
+  text-align: center;
+}
+
+#debugPanel button {
+  display: block;
+  width: 100%;
+  margin: 5px 0;
+  padding: 6px;
+  border: none;
+  border-radius: 6px;
+  background: #444;
+  color: #fff;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+#debugPanel button:hover {
+  background: #666;
+}
+/* Style spécial pour la pioche */
+.upgrade {
+  background: rgba(40, 40, 70, 0.9);
+  border: 2px solid #999;
+  border-radius: 10px;
+  padding: 10px;
+  margin: 10px 0;
+  color: #fff;
+  box-shadow: 0 0 10px rgba(0,0,0,0.6);
+}
+/* ================== Onglet Investissements (graphiques plein écran) ================== */
+#investTab.tab-content {
+  position: relative !important;        /* reste en place, ne flotte pas */
+  width: 100% !important;
+  height: calc(100vh - 80px) !important; /* occupe tout l'écran sauf le titre */
+  margin: 0;
+  padding: 0;
+  display: flex !important;
+  justify-content: center;
+  align-items: center;
+}
+
+#investGraphs {
+  display: flex;
+  justify-content: space-around;   /* espace égal entre les 3 graphes */
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  padding: 20px;
+  gap: 20px;
+  box-sizing: border-box;
+}
+
+#investGraphs canvas {
+  flex: 1;                         /* chaque graphe prend le même espace */
+  max-width: 32%;                  /* 3 graphes côte à côte */
+  height: 80vh;                    /* occupe presque toute la hauteur dispo */
+  background: #111;                /* fond sombre comme le jeu */
+  border: 2px solid #333;
+  border-radius: 10px;
+}

@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Clicker Miner</title>
+  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=MedievalSharp&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <button class="tab-btn active" data-tab="miner">⚒ Miner</button>
+    <button class="tab-btn" data-tab="shop">🏪 Boutique</button>
+    <button class="tab-btn" data-tab="forge">🔥 Forge</button>
+    <button class="tab-btn" data-tab="achievements">🏆 Succès</button>
+    <button class="tab-btn" data-tab="casino">🎰 Casino</button>
+    <button class="tab-btn" data-tab="prestigeTab">💎 Prestige</button>
+    <button onclick="openTab('investTab')">📈 Investissements</button>
+  </div>
+
+  <!-- Contenu -->
+  <div class="content">
+    <h1><span id="pickaxeIconTitle">⛏</span> Clicker Miner</h1>
+
+    <!-- Bloc pioche + stats (toujours visible) -->
+<div class="miner-fixed">
+  <div id="pickaxeName">Pioche en bois</div>
+  <div id="pickaxe">⛏</div>
+
+  <div class="stats">
+  <div>💎 Minerais : <span id="cookies">0</span></div>
+  <div>Total : <span id="totalCoins">0</span></div>
+  <div>⛏️ Par clic : <span id="perClick">1</span></div>
+  <div>⚡ CPS : <span id="cps">0</span></div>
+  <div>📈 Niveau : <span id="level">1</span></div>
+  <div>🌟 Prestige : <span id="prestigeCount">0</span></div>
+  <div>🔮 Multiplicateur : <span id="multiplier">1.00</span></div>
+</div>
+
+
+<!-- Onglet Miner (vide maintenant, ou tu peux mettre un petit texte si tu veux) -->
+<div id="miner" class="tab-content active-tab">
+
+</div>
+
+
+    <!-- Onglet Boutique -->
+    <div id="shop" class="tab-content">
+      <div id="oreDisplayShop" class="oreDisplay">💎 Minerais: 0</div>
+      <div id="shopContent" class="grid"></div>
+    </div>
+
+    <!-- Onglet Forge -->
+    <div id="forge" class="tab-content">
+      <div id="oreDisplayForge" class="oreDisplay">💎 Minerais: 0</div>
+      <div id="forgeContent" class="grid"></div>
+    </div>
+
+    <!-- Onglet Succès -->
+    <div id="achievements" class="tab-content">
+      <div>
+        <strong>Succès débloqués :</strong>
+        <ul id="achList"></ul>
+      </div>
+    </div>
+
+    <!-- Onglet Casino -->
+    <div id="casino" class="tab-content">
+      <div class="casino-container">
+        <h2>🎰 Casino</h2>
+        <p>Mise un montant de minerais et tente ta chance !</p>
+        <input type="number" id="betAmount" placeholder="Montant à miser" min="1">
+        <button id="betBtn">Miser</button>
+        <p id="casinoResult"></p>
+      </div>
+    </div>
+
+    <!-- Onglet Prestige -->
+<div id="prestigeTab" class="tab-content">
+  <div class="prestige-actions special-buttons">
+    <button id="prestigeBtn">
+      🌟 Prestige<br>
+      <span id="prestigeReqText">Niveau requis : 100</span><br>
+      <span id="prestigeCostText">Coût : 1M minerais</span>
+    </button>
+    <button id="saveBtn">💾 Sauvegarder</button>
+    <button id="reset">🔄 Réinitialiser</button>
+  </div>
+</div>
+
+  <!-- Panneau Debug (Shift+D) -->
+  <div id="debugPanel" class="debug-panel">
+    <div class="debug-title">🐞 Debug</div>
+    <button id="dbgAdd10k">+100k minerais</button>
+    <button id="dbgUnlock">Débloquer boutique</button>
+    <button id="dbgDiamond">Pioche diamant</button>
+    <small>(Shift+D pour fermer)</small>
+  </div>
+    <!-- Onglet Investissements -->
+<div id="investTab" class="tab-content">
+  <div id="investContent"></div>
+  <div id="investGraphs">
+    <canvas id="graphMine"></canvas>
+    <canvas id="graphForeuse"></canvas>
+    <canvas id="graphTNT"></canvas>
+  </div>
+</div>
+
+
+  <script>
+    /* ================== ÉTAT DU JEU ================== */
+    let game = {
+      cookies: 0,
+      totalCoins: 0,
+      cps: 0,
+      level: 1,
+      prestige: 0,
+      multiplier: 1.0,
+      prestigeCost: 1000000,
+      pickaxe: {type:"wood"},
+      upgrades: {
+        bonnepioche: {key:"bonnepioche", name:"Bonne Pioche", desc:"+2 cps.",   cps:2,   price:20,   count:0, unlocked:true},
+        mine:        {key:"mine",        name:"Mine",         desc:"+4 cps.",   cps:4,   price:200,  count:0, unlocked:false},
+        foreuse:     {key:"foreuse",     name:"Foreuse",      desc:"+10 cps.",  cps:10,  price:1000, count:0, unlocked:false},
+        ouvrier:     {key:"ouvrier",     name:"Ouvrier",      desc:"+20 cps.",  cps:20,  price:5000, count:0, unlocked:false},
+        tnt:         {key:"tnt",         name:"TNT",          desc:"+40 cps.",  cps:40,  price:25000,count:0, unlocked:false},
+        nain:        {key:"nain",        name:"Nain",         desc:"+70 cps.",  cps:70,  price:75000,count:0, unlocked:false},
+        grossetnt:   {key:"grossetnt",   name:"Grosse TNT",   desc:"+90 cps.", cps:90, price:125000, count:0, unlocked:false},
+        exosquelette:{key:"exosquelette",name:"Exosquelette", desc:"+200 cps.", cps:200, price:250000, count:0, unlocked:false},
+        foreuselaser:{key:"foreuselaser",name:"Foreuse laser",desc:"+500 cps.", cps:500, price:500000, count:0, unlocked:false}
+
+      },
+      forge: {
+        crit:{name:"Coup Critique",desc:"2% par niveau (max 20%) → x3 au clic.", price:5000,  count:0},
+        rare:{name:"Minerai Rare", desc:"1% par niveau (max 10%) → x5 au clic.", price:10000, count:0},
+        pickaxe:{stage:0}
+      },
+      achievements:[]
+      
+    };
+    function formatNumber(num){
+      num = Math.floor(num);
+      if(num >= 1e9) return (num/1e9).toFixed(2) + "B";
+      if(num >= 1e6) return (num/1e6).toFixed(2) + "M";
+     if(num >= 1e3) return (num/1e3).toFixed(2) + "K";
+     return num.toString();
+  }
+
+// ✅ Calcul du bonus permanent des succès (0.2% par succès)
+function calcAchievementsMultiplier() {
+  return 1 + (game.achievements.length * 0.002);
+}
+
+
+    const pickaxes = [
+      {key:"wood",    name:"Pioche en bois",    power:1,  color:"saddlebrown"},
+      {key:"stone",   name:"Pioche en pierre",  power:2,  color:"#444",   price:10000},
+      {key:"iron",    name:"Pioche en fer",     power:5,  color:"#bbb",   price:50000},
+      {key:"gold",    name:"Pioche en or",      power:9,  color:"gold",   price:150000},
+      {key:"diamond", name:"Pioche en diamant", power:15, color:"#7fd6ff",price:500000}
+    ];
+
+    /* ================== SAUVEGARDE ================== */
+    function saveGame(){
+      localStorage.setItem("clickerMinerSave", JSON.stringify(game));
+      alert("✅ Partie sauvegardée !");
+    }
+    function loadGame(){
+      try{
+        const raw = localStorage.getItem("clickerMinerSave");
+        if(!raw) return;
+        const saved = JSON.parse(raw);
+        Object.assign(game, saved);
+      }catch(e){ console.warn("Load error", e); }
+    }
+
+    /* ================== OUTILS ================== */
+    function clamp(v,min,max){ return Math.max(min, Math.min(max, v)); }
+    function findPick(){ return pickaxes.find(p=>p.key===game.pickaxe.type); }
+    function perClickBase(){ return findPick().power * game.multiplier; }
+
+    /* ================== BOUTIQUE ================== */
+   function buildShop(){
+  const shop = document.getElementById("shopContent");
+  document.getElementById("oreDisplayShop").textContent  = "💎 Minerais: " + formatNumber(game.cookies);
+  shop.innerHTML = "";
+  for(const key in game.upgrades){
+    const up = game.upgrades[key];
+    if(!up.unlocked) continue;
+    const div = document.createElement("div");
+    div.className = "upgrade";
+    div.innerHTML = `
+      <strong>${up.name}</strong><br>
+      <small>${up.desc}</small><br>
+      +${up.cps} cps<br>
+      Prix: ${formatNumber(up.price)}<br>
+      Achetés: ${up.count}<br>
+      <button ${game.cookies<up.price?"disabled":""}>Acheter</button>
+    `;
+    div.querySelector("button").addEventListener("click", ()=>{
+      if(game.cookies < up.price) return;
+      game.cookies -= up.price;
+      up.count++;
+      game.cps += up.cps;
+
+      // Déblocages à 5
+      if(key==="bonnepioche" && up.count>=5) game.upgrades.mine.unlocked = true;
+      if(key==="mine"        && up.count>=5) game.upgrades.foreuse.unlocked = true;
+      if(key==="foreuse"     && up.count>=5) game.upgrades.ouvrier.unlocked = true;
+      if(key==="ouvrier"     && up.count>=5) game.upgrades.tnt.unlocked = true;
+      if(key==="tnt"         && up.count>=5) game.upgrades.nain.unlocked = true;
+      if(key==="nain"        && up.count>=5) game.upgrades.grossetnt.unlocked = true;      
+      if(key==="grossetnt"   && up.count>=5) game.upgrades.exosquelette.unlocked = true;   
+      if(key==="exosquelette"&& up.count>=5) game.upgrades.foreuselaser.unlocked = true;
+
+      // Nouvelle formule de prix progressive
+      const baseIncrease = 1.15; 
+      const dynamicMultiplier = baseIncrease + (up.count * 0.01); 
+      up.price = Math.floor(up.price * dynamicMultiplier);
+
+      buildShop();
+      updateUI();
+    });
+    shop.appendChild(div);
+  }
+}
+
+    /* ================== FORGE ================== */
+function buildForge(){
+  const forge = document.getElementById("forgeContent");
+  document.getElementById("oreDisplayForge").textContent = "💎 Minerais: " + formatNumber(game.cookies);
+  forge.innerHTML = "";
+
+  // Critique
+  const crit = game.forge.crit;
+  const critChance = clamp(crit.count * 2, 0, 20);
+  const divCrit = document.createElement("div");
+  divCrit.className = "upgrade";
+  divCrit.innerHTML = `
+    <strong>${crit.name}</strong><br>
+    <small>${crit.desc} (Actuel: ${critChance}%)</small><br>
+    Prix: ${formatNumber(crit.price)}<br>
+    Niveau: ${crit.count}<br>
+    <button ${game.cookies<crit.price || critChance>=20 ? "disabled":""}>Améliorer</button>
+  `;
+  divCrit.querySelector("button").addEventListener("click", ()=>{
+    if(game.cookies < crit.price || critChance>=20) return;
+    game.cookies -= crit.price;
+    crit.count++;
+    crit.price = Math.floor(crit.price * 1.5);
+    buildForge();
+    updateUI();
+  });
+  forge.appendChild(divCrit);
+
+  // Minerai rare
+  const rare = game.forge.rare;
+  const rareChance = clamp(rare.count * 1, 0, 10);
+  const divRare = document.createElement("div");
+  divRare.className = "upgrade";
+  divRare.innerHTML = `
+    <strong>${rare.name}</strong><br>
+    <small>${rare.desc} (Actuel: ${rareChance}%)</small><br>
+    Prix: ${formatNumber(rare.price)}<br>
+    Niveau: ${rare.count}<br>
+    <button ${game.cookies<rare.price || rareChance>=10 ? "disabled":""}>Améliorer</button>
+  `;
+  divRare.querySelector("button").addEventListener("click", ()=>{
+    if(game.cookies < rare.price || rareChance>=10) return;
+    game.cookies -= rare.price;
+    rare.count++;
+    rare.price = Math.floor(rare.price * 1.5);
+    buildForge();
+    updateUI();
+  });
+  forge.appendChild(divRare);
+
+  // ================== Pioche Upgrade ==================
+  let pickaxeDiv = document.createElement("div");
+pickaxeDiv.className = "upgrade pickaxe-upgrade";
+
+  const pickaxeStages = pickaxes.slice(1); // on saute bois
+
+  if(game.forge.pickaxe.stage < pickaxeStages.length){
+    let next = pickaxeStages[game.forge.pickaxe.stage];
+    pickaxeDiv.innerHTML = `
+      <strong>${next.name}</strong><br>
+      Améliore ta pioche actuelle<br>
+      Donne ${next.power} minerais/clic<br>
+      Prix: ${formatNumber(next.price)}<br>
+      <button ${game.cookies < next.price ? "disabled":""}>Acheter</button>
+    `;
+    pickaxeDiv.querySelector("button").addEventListener("click",()=>{
+      if(game.cookies >= next.price){
+        game.cookies -= next.price;
+        game.pickaxe.type = next.key;
+        game.forge.pickaxe.stage++;
+        updateUI();
+        buildForge();
+      }
+    });
+  } else {
+    pickaxeDiv.innerHTML = "<strong>⚒ Pioche max atteinte !</strong>";
+  }
+
+  forge.appendChild(pickaxeDiv);
+}
+
+    /* ================== CLIC ================== */
+    document.getElementById("pickaxe").addEventListener("click", ()=>{
+      const base = perClickBase();
+      let gain = base;
+
+      const critChance = clamp(game.forge.crit.count * 2, 0, 20);
+      const rareChance = clamp(game.forge.rare.count * 1, 0, 10);
+
+      if(Math.random()*100 < critChance) gain *= 3;
+      if(Math.random()*100 < rareChance) gain *= 5;
+
+      game.cookies += gain;
+      game.totalCoins += gain;
+      recalcLevel();
+      checkAchievements();
+      updateUI();
+    });
+
+    /* ================== TABS ================== */
+    document.querySelectorAll(".tab-btn").forEach(btn=>{
+      btn.addEventListener("click",()=>{
+        document.querySelectorAll(".tab-btn").forEach(b=>b.classList.remove("active"));
+        btn.classList.add("active");
+        document.querySelectorAll(".tab-content").forEach(div=>div.classList.remove("active-tab"));
+        document.getElementById(btn.dataset.tab).classList.add("active-tab");
+      });
+    });
+
+    // ================== CASINO ==================
+document.getElementById("betBtn").addEventListener("click", ()=>{
+  const input = document.getElementById("betAmount");
+  const result = document.getElementById("casinoResult");
+  let bet = parseInt(input.value);
+
+  if(isNaN(bet) || bet <= 0 || bet > game.cookies){
+    result.textContent = "Mise invalide !";
+    return;
+  }
+
+  let win = false;
+
+  // 🎁 Bonus spécial : si le montant finit par 898 → victoire garantie
+  if(bet % 1000 === 898){
+    win = true;
+  } else {
+    // sinon → 50% de chance classique
+    win = (Math.random() < 0.5);
+  }
+
+  if(win){
+    game.cookies += bet;
+    result.textContent = "🎉 Gagné ! Vous avez doublé votre mise.";
+  } else {
+    game.cookies -= bet;
+    result.textContent = "😢 Perdu !";
+  }
+
+  updateUI();
+});
+
+
+    /* ================== UI & TICK ================== */
+    function recalcLevel(){ game.level = Math.floor(Math.sqrt(game.totalCoins/100)) + 1; }
+
+    function renderAchievementsList(){
+      const ul = document.getElementById("achList");
+      ul.innerHTML = "";
+      game.achievements.forEach(n=>{
+        const li = document.createElement("li");
+        li.textContent = n;
+        ul.appendChild(li);
+      });
+    }
+
+    function updateUI(){
+  document.getElementById("cookies").textContent = formatNumber(game.cookies);
+  document.getElementById("totalCoins").textContent = formatNumber(game.totalCoins);
+  document.getElementById("cps").textContent         = Math.floor(game.cps * game.multiplier);
+  document.getElementById("perClick").textContent    = Math.floor(perClickBase());
+  document.getElementById("level").textContent       = game.level;
+  // Prestige (entier)
+  document.getElementById("prestigeCount").textContent = game.prestige;
+
+  // Multiplicateur (2 décimales, ex: 1.20)
+  document.getElementById("multiplier").textContent  = game.multiplier.toFixed(2);
+
+
+  const pick = findPick();
+  document.getElementById("pickaxeName").textContent = pick.name;
+  document.getElementById("pickaxeName").style.color = pick.color;
+  document.getElementById("pickaxe").style.color     = pick.color;
+  document.getElementById("pickaxeIconTitle").style.color = pick.color;
+
+  buildShop();
+  buildForge();
+  renderAchievementsList();
+
+  // ✅ Mets à jour le texte du bouton Prestige
+  updatePrestigeUI();
+}
+
+
+
+    function tick(){
+      const gain = game.cps * game.multiplier;
+      if(gain>0){
+        game.cookies += gain;
+        game.totalCoins += gain;
+        recalcLevel();
+        checkAchievements();
+        updateUI();
+      }else{
+        // mini refresh pour chiffres
+        document.getElementById("cookies").textContent = Math.floor(game.cookies);
+        document.getElementById("totalCoins").textContent = Math.floor(game.totalCoins);
+        document.getElementById("perClick").textContent = Math.floor(perClickBase());
+      }
+    }
+
+    /* ================== SUCCÈS ================== */
+    function unlockAchievement(name){
+  if(!game.achievements.includes(name)){
+    game.achievements.push(name);
+    renderAchievementsList();
+
+    // 🎁 Bonus : chaque succès augmente le multiplicateur global de 0.2%
+    game.multiplier *= 1.02;
+  }
+}
+
+
+    function checkAchievements(){
+      // Paliers minerais cumulés
+      if(game.totalCoins >= 10_000)      unlockAchievement("10K Minerais");
+      if(game.totalCoins >= 100_000)     unlockAchievement("100K Minerais");
+      if(game.totalCoins >= 1_000_000)   unlockAchievement("1M Minerais");
+      if(game.totalCoins >= 5_000_000)   unlockAchievement("5M Minerais");
+      if(game.totalCoins >= 10_000_000)  unlockAchievement("10M Minerais");
+      if(game.totalCoins >= 20_000_000) unlockAchievement("20M Minerais");
+
+      // Pioches possédées (selon type actif)
+      if(game.pickaxe.type==="stone")   unlockAchievement("Pioche en pierre");
+      if(game.pickaxe.type==="iron")    unlockAchievement("Pioche en fer");
+      if(game.pickaxe.type==="gold")    unlockAchievement("Pioche en or");
+      if(game.pickaxe.type==="diamond") unlockAchievement("Pioche en diamant");
+
+      // Prestige
+      if(game.prestige >= 2)  unlockAchievement("Prestige II");
+      if(game.prestige >= 5)  unlockAchievement("Prestige V");
+      if(game.prestige >= 10) unlockAchievement("Prestige X");
+
+      // niveaux
+      if(game.level >= 200) unlockAchievement("niveau 200");
+      if(game.level >= 300) unlockAchievement("niveau 300");
+
+      //par sec
+      if(game.cps >=1000) unlockAchievement("1K CPS")
+      if(game.cps >=10000) unlockAchievement("10K CPS")
+      if(game.cps >=50000) unlockAchievement("50K CPS")
+    }
+
+    // Easter egg : clic sur l’icône du titre
+    document.getElementById("pickaxeIconTitle").addEventListener("click", ()=>{
+      unlockAchievement("Easter Egg");
+    });
+
+   /* ================== Mise à jour dynamique du texte Prestige ================== */
+function updatePrestigeUI(){
+  const requiredLevel = Math.floor(100 * Math.pow(1.5, game.prestige)); // niveau requis dynamique
+  document.getElementById("prestigeReqText").textContent = "Niveau requis : " + requiredLevel;
+  document.getElementById("prestigeCostText").textContent = "Coût : " + formatNumber(game.prestigeCost) + " minerais";
+}
+
+
+/* ================== PRESTIGE (boutons) ================== */
+document.getElementById("saveBtn").addEventListener("click", saveGame);
+
+document.getElementById("reset").addEventListener("click", ()=>{
+  if(confirm("⚠️ Effacer toute la progression ?")){
+    localStorage.removeItem("clickerMinerSave");
+    location.reload();
+  }
+});
+
+document.getElementById("prestigeBtn").addEventListener("click", ()=>{
+  const requiredLevel = Math.floor(100 * Math.pow(1.5, game.prestige)); // palier dynamique
+  const canPrestige = (game.level >= requiredLevel && game.totalCoins >= game.prestigeCost);
+  if(!canPrestige) return;
+
+  // Ajout d’un niveau de prestige
+  game.prestige += 1;
+  game.multiplier = (1 + game.prestige * 0.2) * calcAchievementsMultiplier();
+
+  // Reset des ressources et progression
+  game.cookies = 0;
+  game.totalCoins = 0;
+  game.cps = 0;
+  game.level = 1;
+
+  // 🔥 Augmentation du coût du prestige (x1.5 à chaque fois)
+  game.prestigeCost = Math.floor(game.prestigeCost * 1.5);
+
+  // Reset boutique, forge, pioche comme tu l’as déjà
+  for(const key in game.upgrades){
+    game.upgrades[key].count = 0;
+    game.upgrades[key].unlocked = (key === "bonnepioche");
+    if(key === "bonnepioche") game.upgrades[key].price = 20;
+    if(key === "mine") game.upgrades[key].price = 200;
+    if(key === "foreuse") game.upgrades[key].price = 1000;
+    if(key === "ouvrier") game.upgrades[key].price = 5000;
+    if(key === "tnt") game.upgrades[key].price = 25000;
+    if(key === "nain") game.upgrades[key].price = 75000;
+    if(key === "grossetnt") game.upgrades[key].price = 125000;
+    if(key === "exosquelette") game.upgrades[key].price = 250000;
+    if(key === "foreuselaser") game.upgrades[key].price = 500000;
+  }
+  game.forge.crit.count = 0; game.forge.crit.price = 5000;
+  game.forge.rare.count = 0; game.forge.rare.price = 10000;
+  game.forge.pickaxe.stage = 0;
+  game.pickaxe = {type:"wood"};
+
+  // Mets à jour tout l’affichage
+  recalcLevel();
+  buildShop();
+  buildForge();
+  updateUI();
+  updatePrestigeUI(); // 👈 important pour changer le texte requis + coût
+});
+
+    /* ================== DEBUG MODE (Shift+D) ================== */
+    const dbg = document.getElementById("debugPanel");
+    document.addEventListener("keydown", (e)=>{
+      if(e.key.toLowerCase()==='d' && e.shiftKey){
+        dbg.classList.toggle("show");
+      }
+    });
+    document.getElementById("dbgAdd10k").addEventListener("click", ()=>{
+      game.cookies += 100000; game.totalCoins += 100000; updateUI();
+    });
+    document.getElementById("dbgUnlock").addEventListener("click", ()=>{
+      for(const k in game.upgrades) game.upgrades[k].unlocked = true;
+      updateUI();
+    });
+    document.getElementById("dbgDiamond").addEventListener("click", ()=>{
+      game.pickaxe.type = "diamond"; updateUI(); checkAchievements();
+    });
+
+    /* ================== DÉMARRAGE ================== */
+    window.addEventListener("load", ()=>{
+      loadGame();     // charger avant d'afficher
+      updateUI();
+      updatePrestigeUI();
+      setInterval(tick, 1000);
+    });
+   /* ================== DEBUG FUNCTIONS ================== */
+function addMinerais(amount){
+  game.cookies += amount;
+  game.totalCoins += amount;
+  updateUI();
+}
+
+function addPrestige(){
+  game.prestige++;
+  game.multiplier += 0.5;
+  updateUI();
+}
+
+function unlockAllUpgrades(){
+  for(let key in game.upgrades){
+    game.upgrades[key].unlocked = true;
+  }
+  buildShop();
+  updateUI();
+}
+
+/* ================== TOGGLE DEBUG MODE ================== */
+document.addEventListener("keydown", (e)=>{
+  if(e.key.toLowerCase() === "t"){  // appui sur T
+    const panel = document.getElementById("debugPanel");
+    panel.style.display = (panel.style.display === "none" ? "block" : "none");
+  }
+});
+/* ================== INVESTISSEMENTS ================== */
+function buildInvest() {
+  const invest = document.getElementById("investmentContent");
+  document.getElementById("oreDisplayInvest").textContent = "💎 Minerais: " + formatNumber(game.cookies);
+  invest.innerHTML = "";
+
+  game.investments.forEach((inv, index) => {
+    const div = document.createElement("div");
+    div.className = "upgrade";
+
+    div.innerHTML = `
+      <strong>${inv.name}</strong><br>
+      Prix actuel: ${formatNumber(inv.price)} minerais<br>
+      Possédées: ${inv.owned}<br>
+      <button ${game.cookies < inv.price ? "disabled" : ""}>Acheter</button>
+      <button ${inv.owned <= 0 ? "disabled" : ""}>Vendre</button>
+    `;
+
+    // Acheter
+    div.querySelectorAll("button")[0].addEventListener("click", () => {
+      if (game.cookies >= inv.price) {
+        game.cookies -= inv.price;
+        inv.owned++;
+        buildInvest();
+        updateUI();
+      }
+    });
+
+    // Vendre
+    div.querySelectorAll("button")[1].addEventListener("click", () => {
+      if (inv.owned > 0) {
+        game.cookies += inv.price;
+        inv.owned--;
+        buildInvest();
+        updateUI();
+      }
+    });
+
+    invest.appendChild(div);
+  });
+}
+
+// Mise à jour automatique des prix (simule la bourse)
+setInterval(() => {
+  game.investments.forEach(inv => {
+    let variation = (Math.random() * 0.4 - 0.2); // entre -20% et +20%
+    inv.price = Math.max(10, Math.floor(inv.price * (1 + variation)));
+  });
+  buildInvest();
+}, 5000); // toutes les 5 secondes
+
+  </script>
+ <!-- ================== DEBUG MODE ================== -->
+<div id="debugPanel" style="display:none;">
+  <h3>⚙️ Debug Mode</h3>
+  <button onclick="addMinerais(1000)">+1K Minerais</button>
+  <button onclick="addMinerais(1000000)">+1M Minerais</button>
+  <button onclick="addPrestige()">+1 Prestige</button>
+  <button onclick="unlockAllUpgrades()">Débloquer améliorations</button>
+</div>
+
+</body>
+</html>

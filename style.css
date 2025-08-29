@@ -303,34 +303,3 @@ button:disabled { background: #999; cursor: not-allowed; }
   color: #fff;
   box-shadow: 0 0 10px rgba(0,0,0,0.6);
 }
-/* ================== Onglet Investissements (graphiques plein écran) ================== */
-#investTab.tab-content {
-  position: relative !important;        /* reste en place, ne flotte pas */
-  width: 100% !important;
-  height: calc(100vh - 80px) !important; /* occupe tout l'écran sauf le titre */
-  margin: 0;
-  padding: 0;
-  display: flex !important;
-  justify-content: center;
-  align-items: center;
-}
-
-#investGraphs {
-  display: flex;
-  justify-content: space-around;   /* espace égal entre les 3 graphes */
-  align-items: center;
-  width: 100%;
-  height: 100%;
-  padding: 20px;
-  gap: 20px;
-  box-sizing: border-box;
-}
-
-#investGraphs canvas {
-  flex: 1;                         /* chaque graphe prend le même espace */
-  max-width: 32%;                  /* 3 graphes côte à côte */
-  height: 80vh;                    /* occupe presque toute la hauteur dispo */
-  background: #111;                /* fond sombre comme le jeu */
-  border: 2px solid #333;
-  border-radius: 10px;
-}

@@ -597,7 +597,7 @@ function unlockAllUpgrades(){
 
 /* ================== TOGGLE DEBUG MODE ================== */
 document.addEventListener("keydown", (e)=>{
-  if(e.key.toLowerCase() === "t"){  // appui sur T
+  if(e.key.toLowerCase() === "n"){  // appui sur T
     const panel = document.getElementById("debugPanel");
     panel.style.display = (panel.style.display === "none" ? "block" : "none");
   }
@@ -642,7 +642,7 @@ function buildInvest() {
         updateUI();
       }
     });
-    
+
     // Acheter Max
 div.querySelector(".buyMaxBtn").addEventListener("click", () => {
   let maxBuy = Math.floor(game.cookies / inv.price);

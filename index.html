@@ -5,6 +5,7 @@
   <title>Clicker Miner</title>
   <link rel="stylesheet" href="style.css" />
   <link href="https://fonts.googleapis.com/css2?family=MedievalSharp&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
   <!-- Sidebar -->
@@ -167,12 +168,7 @@ function calcAchievementsMultiplier() {
       {key:"gold",    name:"Pioche en or",      power:9,  color:"gold",   price:150000},
       {key:"diamond", name:"Pioche en diamant", power:15, color:"#7fd6ff",price:500000}
     ];
-      investments: [
-  { name: "Mine", price: 1000, owned: 0 },
-  { name: "Foreuse", price: 5000, owned: 0 },
-  { name: "TNT", price: 20000, owned: 0 }
-],
-
+  
     /* ================== SAUVEGARDE ================== */
     function saveGame(){
       localStorage.setItem("clickerMinerSave", JSON.stringify(game));
@@ -570,12 +566,13 @@ document.getElementById("prestigeBtn").addEventListener("click", ()=>{
 
     /* ================== DÉMARRAGE ================== */
     window.addEventListener("load", ()=>{
-      loadGame();     // charger avant d'afficher
-      updateUI();
-      updatePrestigeUI();
-      setInterval(tick, 1000);
-      buildInvest();
-    });
+  loadGame();     
+  updateUI();
+  updatePrestigeUI();
+  setInterval(tick, 1000);
+  buildInvest();   // 👈 ici
+});
+
    /* ================== DEBUG FUNCTIONS ================== */
 function addMinerais(amount){
   game.cookies += amount;
@@ -655,6 +652,51 @@ setInterval(() => {
   });
   buildInvest();
 }, 5000); // toutes les 5 secondes
+
+// === Initialisation des graphes ===
+const ctxMine = document.getElementById("graphMine").getContext("2d");
+const ctxForeuse = document.getElementById("graphForeuse").getContext("2d");
+const ctxTNT = document.getElementById("graphTNT").getContext("2d");
+
+const charts = {
+  mine: new Chart(ctxMine, {
+    type: "line",
+    data: { labels: [], datasets: [{ label: "Mine locale", data: [], borderColor: "cyan", fill: false }] },
+    options: { responsive: true, scales: { x: { display: false } } }
+  }),
+  foreuse: new Chart(ctxForeuse, {
+    type: "line",
+    data: { labels: [], datasets: [{ label: "Compagnie de foreuses", data: [], borderColor: "orange", fill: false }] },
+    options: { responsive: true, scales: { x: { display: false } } }
+  }),
+  tnt: new Chart(ctxTNT, {
+    type: "line",
+    data: { labels: [], datasets: [{ label: "Société TNT Mining", data: [], borderColor: "red", fill: false }] },
+    options: { responsive: true, scales: { x: { display: false } } }
+  })
+};
+
+// === Mise à jour toutes les 5 secondes (en même temps que la variation des prix) ===
+setInterval(() => {
+  game.investments.forEach((inv, i) => {
+    let label = new Date().toLocaleTimeString().slice(0,8);
+    if(i===0){
+      charts.mine.data.labels.push(label);
+      charts.mine.data.datasets[0].data.push(inv.price);
+      charts.mine.update();
+    }
+    if(i===1){
+      charts.foreuse.data.labels.push(label);
+      charts.foreuse.data.datasets[0].data.push(inv.price);
+      charts.foreuse.update();
+    }
+    if(i===2){
+      charts.tnt.data.labels.push(label);
+      charts.tnt.data.datasets[0].data.push(inv.price);
+      charts.tnt.update();
+    }
+  });
+}, 5000);
 
   </script>
  <!-- ================== DEBUG MODE ================== -->

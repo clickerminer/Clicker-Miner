@@ -15,7 +15,7 @@
     <button class="tab-btn" data-tab="achievements">🏆 Succès</button>
     <button class="tab-btn" data-tab="casino">🎰 Casino</button>
     <button class="tab-btn" data-tab="prestigeTab">💎 Prestige</button>
-    <button onclick="openTab('investTab')">📈 Investissements</button>
+    <button class="tab-btn" data-tab="investTab">📈 Investissements</button>
   </div>
 
   <!-- Contenu -->
@@ -96,9 +96,10 @@
     <button id="dbgDiamond">Pioche diamant</button>
     <small>(Shift+D pour fermer)</small>
   </div>
-    <!-- Onglet Investissements -->
+   <!-- Onglet Investissements -->
 <div id="investTab" class="tab-content">
   <div id="investContent"></div>
+  <div id="oreDisplayInvest" class="oreDisplay">💎 Minerais: 0</div>
   <div id="investGraphs">
     <canvas id="graphMine"></canvas>
     <canvas id="graphForeuse"></canvas>
@@ -135,11 +136,18 @@
         rare:{name:"Minerai Rare", desc:"1% par niveau (max 10%) → x5 au clic.", price:10000, count:0},
         pickaxe:{stage:0}
       },
-      achievements:[]
+            achievements:[],
+      investments: [
+        { name: "Mine locale",              price: 1000,  owned: 0 },
+        { name: "Compagnie de foreuses",    price: 5000,  owned: 0 },
+        { name: "Société TNT Mining",       price: 20000, owned: 0 }
+      ]
+
       
     };
     function formatNumber(num){
       num = Math.floor(num);
+      if(num >=1e12) return (num/1e12).toFixed(2) + "T";
       if(num >= 1e9) return (num/1e9).toFixed(2) + "B";
       if(num >= 1e6) return (num/1e6).toFixed(2) + "M";
      if(num >= 1e3) return (num/1e3).toFixed(2) + "K";
@@ -159,6 +167,11 @@ function calcAchievementsMultiplier() {
       {key:"gold",    name:"Pioche en or",      power:9,  color:"gold",   price:150000},
       {key:"diamond", name:"Pioche en diamant", power:15, color:"#7fd6ff",price:500000}
     ];
+      investments: [
+  { name: "Mine", price: 1000, owned: 0 },
+  { name: "Foreuse", price: 5000, owned: 0 },
+  { name: "TNT", price: 20000, owned: 0 }
+],
 
     /* ================== SAUVEGARDE ================== */
     function saveGame(){
@@ -331,6 +344,8 @@ pickaxeDiv.className = "upgrade pickaxe-upgrade";
         btn.classList.add("active");
         document.querySelectorAll(".tab-content").forEach(div=>div.classList.remove("active-tab"));
         document.getElementById(btn.dataset.tab).classList.add("active-tab");
+
+            if (btn.dataset.tab === "investTab") { buildInvest(); }
       });
     });
 
@@ -559,6 +574,7 @@ document.getElementById("prestigeBtn").addEventListener("click", ()=>{
       updateUI();
       updatePrestigeUI();
       setInterval(tick, 1000);
+      buildInvest();
     });
    /* ================== DEBUG FUNCTIONS ================== */
 function addMinerais(amount){
@@ -590,24 +606,25 @@ document.addEventListener("keydown", (e)=>{
 });
 /* ================== INVESTISSEMENTS ================== */
 function buildInvest() {
-  const invest = document.getElementById("investmentContent");
-  document.getElementById("oreDisplayInvest").textContent = "💎 Minerais: " + formatNumber(game.cookies);
+  const invest = document.getElementById("investContent");
+  document.getElementById("oreDisplayInvest").textContent =
+    "💎 Minerais: " + formatNumber(game.cookies);
   invest.innerHTML = "";
 
   game.investments.forEach((inv, index) => {
     const div = document.createElement("div");
-    div.className = "upgrade";
+    div.className = "upgrade"; // applique le style de tes autres cartes
 
     div.innerHTML = `
       <strong>${inv.name}</strong><br>
       Prix actuel: ${formatNumber(inv.price)} minerais<br>
       Possédées: ${inv.owned}<br>
-      <button ${game.cookies < inv.price ? "disabled" : ""}>Acheter</button>
-      <button ${inv.owned <= 0 ? "disabled" : ""}>Vendre</button>
+      <button class="buyBtn" ${game.cookies < inv.price ? "disabled" : ""}>Acheter</button>
+      <button class="sellBtn" ${inv.owned <= 0 ? "disabled" : ""}>Vendre</button>
     `;
 
     // Acheter
-    div.querySelectorAll("button")[0].addEventListener("click", () => {
+    div.querySelector(".buyBtn").addEventListener("click", () => {
       if (game.cookies >= inv.price) {
         game.cookies -= inv.price;
         inv.owned++;
@@ -617,7 +634,7 @@ function buildInvest() {
     });
 
     // Vendre
-    div.querySelectorAll("button")[1].addEventListener("click", () => {
+    div.querySelector(".sellBtn").addEventListener("click", () => {
       if (inv.owned > 0) {
         game.cookies += inv.price;
         inv.owned--;

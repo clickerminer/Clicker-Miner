@@ -438,51 +438,121 @@ document.getElementById("betBtn").addEventListener("click", ()=>{
     }
 
     /* ================== SUCCÈS ================== */
-    function unlockAchievement(name){
+
+// ✅ Liste complète des succès triés par catégories
+const allAchievements = {
+  "Minerais cumulés": [
+    "10K Minerais",
+    "100K Minerais",
+    "1M Minerais",
+    "5M Minerais",
+    "10M Minerais",
+    "20M Minerais"
+  ],
+  "Pioches": [
+    "Pioche en pierre",
+    "Pioche en fer",
+    "Pioche en or",
+    "Pioche en diamant"
+  ],
+  "Prestige": [
+    "Prestige II",
+    "Prestige V",
+    "Prestige X"
+  ],
+  "Niveaux": [
+    "niveau 200",
+    "niveau 300"
+  ],
+  "Production (CPS)": [
+    "1K CPS",
+    "10K CPS",
+    "50K CPS"
+  ],
+  "Secrets": [
+    "Easter Egg"
+  ]
+};
+
+function unlockAchievement(name){
   if(!game.achievements.includes(name)){
     game.achievements.push(name);
     renderAchievementsList();
 
-    // 🎁 Bonus : chaque succès augmente le multiplicateur global de 0.2%
+    // 🎁 Bonus : chaque succès augmente le multiplicateur global de 2%
     game.multiplier *= 1.02;
   }
 }
 
+function checkAchievements(){
+  // Minerais cumulés
+  if(game.totalCoins >= 10_000)      unlockAchievement("10K Minerais");
+  if(game.totalCoins >= 100_000)     unlockAchievement("100K Minerais");
+  if(game.totalCoins >= 1_000_000)   unlockAchievement("1M Minerais");
+  if(game.totalCoins >= 5_000_000)   unlockAchievement("5M Minerais");
+  if(game.totalCoins >= 10_000_000)  unlockAchievement("10M Minerais");
+  if(game.totalCoins >= 20_000_000)  unlockAchievement("20M Minerais");
 
-    function checkAchievements(){
-      // Paliers minerais cumulés
-      if(game.totalCoins >= 10_000)      unlockAchievement("10K Minerais");
-      if(game.totalCoins >= 100_000)     unlockAchievement("100K Minerais");
-      if(game.totalCoins >= 1_000_000)   unlockAchievement("1M Minerais");
-      if(game.totalCoins >= 5_000_000)   unlockAchievement("5M Minerais");
-      if(game.totalCoins >= 10_000_000)  unlockAchievement("10M Minerais");
-      if(game.totalCoins >= 20_000_000) unlockAchievement("20M Minerais");
+  // Pioches
+  if(game.pickaxe.type==="stone")   unlockAchievement("Pioche en pierre");
+  if(game.pickaxe.type==="iron")    unlockAchievement("Pioche en fer");
+  if(game.pickaxe.type==="gold")    unlockAchievement("Pioche en or");
+  if(game.pickaxe.type==="diamond") unlockAchievement("Pioche en diamant");
 
-      // Pioches possédées (selon type actif)
-      if(game.pickaxe.type==="stone")   unlockAchievement("Pioche en pierre");
-      if(game.pickaxe.type==="iron")    unlockAchievement("Pioche en fer");
-      if(game.pickaxe.type==="gold")    unlockAchievement("Pioche en or");
-      if(game.pickaxe.type==="diamond") unlockAchievement("Pioche en diamant");
+  // Prestige
+  if(game.prestige >= 2)  unlockAchievement("Prestige II");
+  if(game.prestige >= 5)  unlockAchievement("Prestige V");
+  if(game.prestige >= 10) unlockAchievement("Prestige X");
 
-      // Prestige
-      if(game.prestige >= 2)  unlockAchievement("Prestige II");
-      if(game.prestige >= 5)  unlockAchievement("Prestige V");
-      if(game.prestige >= 10) unlockAchievement("Prestige X");
+  // Niveaux
+  if(game.level >= 200) unlockAchievement("niveau 200");
+  if(game.level >= 300) unlockAchievement("niveau 300");
 
-      // niveaux
-      if(game.level >= 200) unlockAchievement("niveau 200");
-      if(game.level >= 300) unlockAchievement("niveau 300");
+  // CPS
+  if(game.cps >=1000)  unlockAchievement("1K CPS");
+  if(game.cps >=10000) unlockAchievement("10K CPS");
+  if(game.cps >=50000) unlockAchievement("50K CPS");
+}
 
-      //par sec
-      if(game.cps >=1000) unlockAchievement("1K CPS")
-      if(game.cps >=10000) unlockAchievement("10K CPS")
-      if(game.cps >=50000) unlockAchievement("50K CPS")
-    }
+// Easter egg : clic sur l’icône du titre
+document.getElementById("pickaxeIconTitle").addEventListener("click", ()=>{
+  unlockAchievement("Easter Egg");
+});
 
-    // Easter egg : clic sur l’icône du titre
-    document.getElementById("pickaxeIconTitle").addEventListener("click", ()=>{
-      unlockAchievement("Easter Egg");
+// ✅ Affichage trié et coloré des succès
+function renderAchievementsList(){
+  const ul = document.getElementById("achList");
+  ul.innerHTML = "";
+
+  for(const category in allAchievements){
+    const catLi = document.createElement("li");
+    catLi.textContent = "📂 " + category;
+    catLi.style.fontWeight = "bold";
+    catLi.style.marginTop = "10px";
+    ul.appendChild(catLi);
+
+    allAchievements[category].forEach(name => {
+      const li = document.createElement("li");
+      li.style.marginLeft = "20px";
+
+      if(name === "Easter Egg" && !game.achievements.includes("Easter Egg")){
+        li.textContent = "???"; // 🔒 caché
+        li.style.color = "gray";
+      } else {
+        li.textContent = name;
+        if(game.achievements.includes(name)){
+          li.style.color = "limegreen"; // ✅ débloqué
+          li.style.fontWeight = "bold";
+        } else {
+          li.style.color = "lightgray"; // ❌ pas encore
+        }
+      }
+
+      ul.appendChild(li);
     });
+  }
+}
+
 
    /* ================== Mise à jour dynamique du texte Prestige ================== */
 function updatePrestigeUI(){

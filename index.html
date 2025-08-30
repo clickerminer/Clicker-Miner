@@ -139,10 +139,10 @@
       },
             achievements:[],
       investments: [
-        { name: "Mine locale",              price: 1000,  owned: 0 },
-        { name: "Compagnie de foreuses",    price: 5000,  owned: 0 },
-        { name: "Société TNT Mining",       price: 20000, owned: 0 }
-      ]
+  { name: "Mine locale",           price: 1000,  basePrice: 1000,  owned: 0 },
+  { name: "Compagnie de foreuses", price: 5000,  basePrice: 5000,  owned: 0 },
+  { name: "Société TNT Mining",    price: 20000, basePrice: 20000, owned: 0 }
+]
 
       
     };
@@ -368,15 +368,16 @@ document.getElementById("betBtn").addEventListener("click", ()=>{
 
   if(win){
     game.cookies += bet;
+    game.totalCoins += bet; // ✅ ajoute au total
     result.textContent = "🎉 Gagné ! Vous avez doublé votre mise.";
   } else {
     game.cookies -= bet;
+    // pas besoin de modifier totalCoins car c'est une perte, pas un gain
     result.textContent = "😢 Perdu !";
   }
 
   updateUI();
 });
-
 
     /* ================== UI & TICK ================== */
     function recalcLevel(){ game.level = Math.floor(Math.sqrt(game.totalCoins/100)) + 1; }
@@ -613,12 +614,14 @@ function buildInvest() {
     div.className = "upgrade"; // applique le style de tes autres cartes
 
     div.innerHTML = `
-      <strong>${inv.name}</strong><br>
-      Prix actuel: ${formatNumber(inv.price)} minerais<br>
-      Possédées: ${inv.owned}<br>
-      <button class="buyBtn" ${game.cookies < inv.price ? "disabled" : ""}>Acheter</button>
-      <button class="sellBtn" ${inv.owned <= 0 ? "disabled" : ""}>Vendre</button>
-    `;
+  <strong>${inv.name}</strong><br>
+  Prix actuel: ${formatNumber(inv.price)} minerais<br>
+  Possédées: ${inv.owned}<br>
+  <button class="buyBtn" ${game.cookies < inv.price ? "disabled" : ""}>Acheter</button>
+  <button class="sellBtn" ${inv.owned <= 0 ? "disabled" : ""}>Vendre</button><br>
+  <button class="buyMaxBtn" ${game.cookies < inv.price ? "disabled" : ""}>Acheter Max</button>
+  <button class="sellAllBtn" ${inv.owned <= 0 ? "disabled" : ""}>Vendre Tout</button>
+`;
 
     // Acheter
     div.querySelector(".buyBtn").addEventListener("click", () => {
@@ -639,6 +642,28 @@ function buildInvest() {
         updateUI();
       }
     });
+    
+    // Acheter Max
+div.querySelector(".buyMaxBtn").addEventListener("click", () => {
+  let maxBuy = Math.floor(game.cookies / inv.price);
+  if(maxBuy > 0){
+    game.cookies -= inv.price * maxBuy;
+    inv.owned += maxBuy;
+    buildInvest();
+    updateUI();
+  }
+});
+
+// Vendre Tout
+div.querySelector(".sellAllBtn").addEventListener("click", () => {
+  if(inv.owned > 0){
+    game.cookies += inv.price * inv.owned;
+    inv.owned = 0;
+    buildInvest();
+    updateUI();
+  }
+});
+
 
     invest.appendChild(div);
   });
@@ -647,11 +672,19 @@ function buildInvest() {
 // Mise à jour automatique des prix (simule la bourse)
 setInterval(() => {
   game.investments.forEach(inv => {
-    let variation = (Math.random() * 0.4 - 0.2); // entre -20% et +20%
-    inv.price = Math.max(10, Math.floor(inv.price * (1 + variation)));
+    // variation entre -15% et +20%
+    let variation = (Math.random() * 0.24 - 0.10); 
+
+    // nouveau prix
+    let newPrice = Math.floor(inv.price * (1 + variation));
+
+    // empêche de descendre en dessous de 50% du prix de départ
+    newPrice = Math.max(inv.basePrice * 0.5, newPrice);
+
+    inv.price = newPrice;
   });
   buildInvest();
-}, 5000); // toutes les 5 secondes
+}, 5000);
 
 // === Initialisation des graphes ===
 const ctxMine = document.getElementById("graphMine").getContext("2d");

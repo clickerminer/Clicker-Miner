@@ -673,7 +673,7 @@ div.querySelector(".sellAllBtn").addEventListener("click", () => {
 setInterval(() => {
   game.investments.forEach(inv => {
     // variation entre -15% et +20%
-    let variation = (Math.random() * 0.24 - 0.10); 
+    let variation = (Math.random() * 0.08 - 0.03); 
 
     // nouveau prix
     let newPrice = Math.floor(inv.price * (1 + variation));

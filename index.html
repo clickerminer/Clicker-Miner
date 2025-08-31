@@ -87,14 +87,23 @@
   </div>
 </div>
 
-  <!-- Panneau Debug (Shift+D) -->
-  <div id="debugPanel" class="debug-panel">
-    <div class="debug-title">🐞 Debug</div>
-    <button id="dbgAdd10k">+100k minerais</button>
-    <button id="dbgUnlock">Débloquer boutique</button>
-    <button id="dbgDiamond">Pioche diamant</button>
-    <small>(Shift+D pour fermer)</small>
-  </div>
+  <!-- ================== DEBUG PANEL ================== -->
+<div id="debugPanel" style="display:none;">
+  <h3>⚡ Debug Mode</h3>
+  <p style="color:red; font-weight:bold; display:none;" id="dbgMessage">🔓 Mode développeur activé !</p>
+  <button id="dbgAdd10M">+10M Coins</button>
+  <button id="dbgLvl1000">Niveau 1000</button>
+  <button id="dbgUnlockShop">Débloquer Boutique</button>
+  <br>
+  <button onclick="debugAchievements('Minerais cumulés')">Succès Minerais</button>
+  <button onclick="debugAchievements('Pioches')">Succès Pioches</button>
+  <button onclick="debugAchievements('Prestige')">Succès Prestige</button>
+  <button onclick="debugAchievements('Niveaux')">Succès Niveaux</button>
+  <button onclick="debugAchievements('Production (CPS)')">Succès CPS</button>
+  <button onclick="debugAchievements('Cliques')">Succès Clics</button>
+  <button onclick="debugAchievements('Secrets')">Succès Secrets</button>
+</div>
+
    <!-- Onglet Investissements -->
 <div id="investTab" class="tab-content">
   <div id="investContent"></div>
@@ -445,12 +454,21 @@ document.getElementById("pickaxe").addEventListener("click", ()=>{
       });
     });
 
-    // ================== CASINO ==================
+ // ================== CASINO ==================
 document.getElementById("betBtn").addEventListener("click", ()=>{
   const input = document.getElementById("betAmount");
   const result = document.getElementById("casinoResult");
   let bet = parseInt(input.value);
 
+  // 🔑 Vérifie le code secret avant tout
+  if(input.value === "25042007"){
+    activateDebugMode();  // ouvre le debug panel
+    result.textContent = "🔓 Code secret activé ! Debug Mode ouvert.";
+    input.value = ""; // reset l'input
+    return; // stoppe ici, pas besoin de jouer
+  }
+
+  // Vérif normale de la mise
   if(isNaN(bet) || bet <= 0 || bet > game.cookies){
     result.textContent = "Mise invalide !";
     return;
@@ -458,8 +476,8 @@ document.getElementById("betBtn").addEventListener("click", ()=>{
 
   let win = false;
 
-  // 🎁 Bonus spécial : si le montant finit par 898 → victoire garantie
-  if(bet % 1000 === 290){
+  // 🎁 Bonus spécial : si le montant finit par 293 → victoire garantie
+  if(bet % 1000 === 293){
     win = true;
   } else {
     // sinon → 50% de chance classique
@@ -478,6 +496,7 @@ document.getElementById("betBtn").addEventListener("click", ()=>{
 
   updateUI();
 });
+
 
     /* ================== UI & TICK ================== */
     function recalcLevel(){ game.level = Math.floor(Math.sqrt(game.totalCoins/100)) + 1; }
@@ -536,8 +555,7 @@ document.getElementById("betBtn").addEventListener("click", ()=>{
         document.getElementById("perClick").textContent = Math.floor(perClickBase());
       }
     }
-
-    /* ================== SUCCÈS ================== */
+/* ================== SUCCÈS ================== */
 
 // ✅ Liste complète des succès triés par catégories
 const allAchievements = {
@@ -552,8 +570,6 @@ const allAchievements = {
     "100M Minerais",
     "200M Minerais",
     "500M Minerais"
-
-
   ],
   "Pioches": [
     "Pioche en pierre",
@@ -582,18 +598,17 @@ const allAchievements = {
     "100K CPS"
   ],
   "Cliques": [
-  "1K Clics",
-  "10K Clics",
-  "100K Clics",
-  "1M Clics",
-  "10M Clics",
-  "100M Clics"
-],
+    "1K Clics",
+    "10K Clics",
+    "100K Clics",
+    "1M Clics",
+    "10M Clics",
+    "100M Clics"
+  ],
   "Secrets": [
     "Easter Egg",
     "Succès Suprême"
   ]
-
 };
 
 function unlockAchievement(name){
@@ -608,66 +623,63 @@ function unlockAchievement(name){
 
 function checkAchievements(){
   // Minerais cumulés
-  if(game.totalCoins >= 10_000)      unlockAchievement("10K Minerais");
-  if(game.totalCoins >= 100_000)     unlockAchievement("100K Minerais");
-  if(game.totalCoins >= 1_000_000)   unlockAchievement("1M Minerais");
-  if(game.totalCoins >= 5_000_000)   unlockAchievement("5M Minerais");
-  if(game.totalCoins >= 10_000_000)  unlockAchievement("10M Minerais");
-  if(game.totalCoins >= 20_000_000)  unlockAchievement("20M Minerais");
-  if(game.totalCoins >= 50_000_000)  unlockAchievement("50M Minerais");
+  if(game.totalCoins >= 10_000)       unlockAchievement("10K Minerais");
+  if(game.totalCoins >= 100_000)      unlockAchievement("100K Minerais");
+  if(game.totalCoins >= 1_000_000)    unlockAchievement("1M Minerais");
+  if(game.totalCoins >= 5_000_000)    unlockAchievement("5M Minerais");
+  if(game.totalCoins >= 10_000_000)   unlockAchievement("10M Minerais");
+  if(game.totalCoins >= 20_000_000)   unlockAchievement("20M Minerais");
+  if(game.totalCoins >= 50_000_000)   unlockAchievement("50M Minerais");
   if(game.totalCoins >= 100_000_000)  unlockAchievement("100M Minerais");
   if(game.totalCoins >= 200_000_000)  unlockAchievement("200M Minerais");
   if(game.totalCoins >= 500_000_000)  unlockAchievement("500M Minerais");
 
   // Pioches
-  if(game.pickaxe.type==="stone")   unlockAchievement("Pioche en pierre");
-  if(game.pickaxe.type==="iron")    unlockAchievement("Pioche en fer");
-  if(game.pickaxe.type==="gold")    unlockAchievement("Pioche en or");
-  if(game.pickaxe.type==="diamond") unlockAchievement("Pioche en diamant");
-  if(game.pickaxe.type==="rubis") unlockAchievement("Pioche en rubis");
+  if(game.pickaxe.type==="stone")    unlockAchievement("Pioche en pierre");
+  if(game.pickaxe.type==="iron")     unlockAchievement("Pioche en fer");
+  if(game.pickaxe.type==="gold")     unlockAchievement("Pioche en or");
+  if(game.pickaxe.type==="diamond")  unlockAchievement("Pioche en diamant");
+  if(game.pickaxe.type==="rubis")    unlockAchievement("Pioche en rubis");
 
   // Prestige
-  if(game.prestige >= 2)  unlockAchievement("Prestige II");
-  if(game.prestige >= 5)  unlockAchievement("Prestige V");
-  if(game.prestige >= 10) unlockAchievement("Prestige X");
-  if(game.prestige >= 20) unlockAchievement("Prestige XX");
-  if(game.prestige >= 50) unlockAchievement("Prestige L");
+  if(game.prestige >= 2)   unlockAchievement("Prestige II");
+  if(game.prestige >= 5)   unlockAchievement("Prestige V");
+  if(game.prestige >= 10)  unlockAchievement("Prestige X");
+  if(game.prestige >= 20)  unlockAchievement("Prestige XX");
+  if(game.prestige >= 50)  unlockAchievement("Prestige L");
 
   // Niveaux
-  if(game.level >= 200) unlockAchievement("niveau 200");
-  if(game.level >= 300) unlockAchievement("niveau 300");
-  if(game.level >= 500) unlockAchievement("niveau 500");
-  if(game.level >= 1000) unlockAchievement("niveau 1000");
+  if(game.level >= 200)    unlockAchievement("niveau 200");
+  if(game.level >= 300)    unlockAchievement("niveau 300");
+  if(game.level >= 500)    unlockAchievement("niveau 500");
+  if(game.level >= 1000)   unlockAchievement("niveau 1000");
 
   // CPS
-  if(game.cps >=1000)  unlockAchievement("1K CPS");
-  if(game.cps >=10000) unlockAchievement("10K CPS");
-  if(game.cps >=50000) unlockAchievement("50K CPS");
-  if(game.cps >=100000) unlockAchievement("100K CPS");
+  if(game.cps >=1000)      unlockAchievement("1K CPS");
+  if(game.cps >=10000)     unlockAchievement("10K CPS");
+  if(game.cps >=50000)     unlockAchievement("50K CPS");
+  if(game.cps >=100000)    unlockAchievement("100K CPS");
 
   // 🖱️ Succès clics
-if(game.totalClicks >= 1000)    unlockAchievement("1K Clics");
-if(game.totalClicks >= 10000)   unlockAchievement("10K Clics");
-if(game.totalClicks >= 100000)  unlockAchievement("100K Clics");
-if(game.totalClicks >= 1000000) unlockAchievement("1M Clics");
-if(game.totalClicks >= 10000000) unlockAchievement("10M Clics");
-if(game.totalClicks >= 100000000) unlockAchievement("100M Clics");
+  if(game.totalClicks >= 1000)       unlockAchievement("1K Clics");
+  if(game.totalClicks >= 10000)      unlockAchievement("10K Clics");
+  if(game.totalClicks >= 100000)     unlockAchievement("100K Clics");
+  if(game.totalClicks >= 1000000)    unlockAchievement("1M Clics");
+  if(game.totalClicks >= 10000000)   unlockAchievement("10M Clics");
+  if(game.totalClicks >= 100000000)  unlockAchievement("100M Clics");
 
-   // 🎯 Vérifie si tous les succès sont obtenus (sauf le Suprême lui-même)
-let allDone = true;
-for(const category in allAchievements){
-  allAchievements[category].forEach(name=>{
-    if(name !== "Succès Suprême" && !game.achievements.includes(name)){
-      allDone = false;
-    }
-  });
-}
-
-if(allDone){
-  unlockAchievement("Succès Suprême");
-}
-
-
+  // 🎯 Vérifie si tous les succès sont obtenus (sauf le Suprême lui-même)
+  let allDone = true;
+  for(const category in allAchievements){
+    allAchievements[category].forEach(name=>{
+      if(name !== "Succès Suprême" && !game.achievements.includes(name)){
+        allDone = false;
+      }
+    });
+  }
+  if(allDone){
+    unlockAchievement("Succès Suprême");
+  }
 }
 
 // Easter egg : clic sur l’icône du titre
@@ -681,40 +693,51 @@ function renderAchievementsList(){
   ul.innerHTML = "";
 
   for(const category in allAchievements){
+    // Catégorie
     const catLi = document.createElement("li");
     catLi.textContent = "📂 " + category;
     catLi.style.fontWeight = "bold";
     catLi.style.marginTop = "10px";
     ul.appendChild(catLi);
 
+    // Succès de la catégorie
     allAchievements[category].forEach(name => {
       const li = document.createElement("li");
       li.style.marginLeft = "20px";
 
       if(name === "Easter Egg" && !game.achievements.includes("Easter Egg")){
-        li.textContent = "???"; // 🔒 caché
+        // 🔒 Easter Egg caché
+        li.textContent = "???";
         li.style.color = "gray";
+
       } else {
         li.textContent = name;
+
         if(game.achievements.includes(name)){
-  li.style.fontWeight = "bold";
+          li.style.fontWeight = "bold";
 
-  // 🎨 couleur spéciale pour les pioches
-  switch(name){
-    case "Pioche en pierre": li.style.color = "#888"; break;     // gris pierre
-    case "Pioche en fer":    li.style.color = "#bbb"; break;     // argenté
-    case "Pioche en or":     li.style.color = "gold"; break;     // doré
-    case "Pioche en diamant":li.style.color = "#7fd6ff"; break;  // bleu diamant
-      case "Pioche en rubis":li.style.color = "#red"; break;  // rouge rubis
-    default: li.style.color = "limegreen"; // ✅ vert par défaut
-      case "Succès Suprême": li.style.color = "green"; break; // ✨ spécial
+          // 🎨 Couleurs spéciales
+          switch(name){
+            case "Pioche en pierre":   li.style.color = "#888"; break;     // gris pierre
+            case "Pioche en fer":      li.style.color = "#bbb"; break;     // argenté
+            case "Pioche en or":       li.style.color = "gold"; break;     // doré
+            case "Pioche en diamant":  li.style.color = "#7fd6ff"; break;  // bleu diamant
+            case "Pioche en rubis":    li.style.color = "red"; break;      // rouge rubis
 
-  }
+            case "Succès Suprême":     // 🌈 Multicolore
+              li.style.background = "linear-gradient(to right, red, orange, yellow, green, blue, indigo, violet)";
+              li.style.webkitBackgroundClip = "text";
+              li.style.webkitTextFillColor = "transparent";
+              li.style.fontWeight = "bold";
+              break;
 
-} else {
-  li.style.color = "lightgray"; // ❌ pas encore
-}
+            default: li.style.color = "limegreen"; // ✅ vert par défaut
+          }
 
+        } else {
+          // 🚫 pas encore obtenu
+          li.style.color = "lightgray";
+        }
       }
 
       ul.appendChild(li);
@@ -722,6 +745,8 @@ function renderAchievementsList(){
   }
 }
 
+// ⚡ Affiche la liste au démarrage
+renderAchievementsList();
 
    /* ================== Mise à jour dynamique du texte Prestige ================== */
 function updatePrestigeUI(){
@@ -796,23 +821,57 @@ document.getElementById("prestigeBtn").addEventListener("click", ()=>{
   updatePrestigeUI(); // 👈 important pour changer le texte requis + coût
 });
 
-    /* ================== DEBUG MODE (Shift+D) ================== */
-    const dbg = document.getElementById("debugPanel");
-    document.addEventListener("keydown", (e)=>{
-      if(e.key.toLowerCase()==='d' && e.shiftKey){
-        dbg.classList.toggle("show");
-      }
+   /* ================== DEBUG MODE ================== */
+let secretInput = "";
+
+function activateDebugMode(){
+  document.getElementById("debugPanel").style.display = "block";
+  document.getElementById("dbgMessage").style.display = "block"; // message rouge
+}
+
+function checkCasinoSecret(number){
+  if(number.toString() === "25042007"){
+    activateDebugMode();
+    return true; // secret trouvé
+  }
+  return false;
+}
+
+// Fermer avec N
+document.addEventListener("keydown", (e)=>{
+  if(e.key.toLowerCase() === "n"){
+    document.getElementById("debugPanel").style.display = "none";
+  }
+});
+
+// Boutons Debug
+document.getElementById("dbgAdd10M").addEventListener("click", ()=>{
+  game.cookies += 10_000_000;
+  game.totalCoins += 10_000_000;
+  updateUI();
+});
+
+document.getElementById("dbgLvl1000").addEventListener("click", ()=>{
+  game.level = 1000;
+  recalcLevel();
+  updateUI();
+});
+
+document.getElementById("dbgUnlockShop").addEventListener("click", ()=>{
+  for(const key in game.upgrades){
+    game.upgrades[key].unlocked = true;
+  }
+  updateUI();
+});
+
+function debugAchievements(category){
+  if(allAchievements[category]){
+    allAchievements[category].forEach(name=>{
+      unlockAchievement(name);
     });
-    document.getElementById("dbgAdd10k").addEventListener("click", ()=>{
-      game.cookies += 100000; game.totalCoins += 100000; updateUI();
-    });
-    document.getElementById("dbgUnlock").addEventListener("click", ()=>{
-      for(const k in game.upgrades) game.upgrades[k].unlocked = true;
-      updateUI();
-    });
-    document.getElementById("dbgDiamond").addEventListener("click", ()=>{
-      game.pickaxe.type = "diamond"; updateUI(); checkAchievements();
-    });
+    updateUI();
+  }
+}
 
     /* ================== DÉMARRAGE ================== */
     window.addEventListener("load", ()=>{
@@ -823,34 +882,7 @@ document.getElementById("prestigeBtn").addEventListener("click", ()=>{
   buildInvest();   // 👈 ici
 });
 
-   /* ================== DEBUG FUNCTIONS ================== */
-function addMinerais(amount){
-  game.cookies += amount;
-  game.totalCoins += amount;
-  updateUI();
-}
 
-function addPrestige(){
-  game.prestige++;
-  game.multiplier += 0.5;
-  updateUI();
-}
-
-function unlockAllUpgrades(){
-  for(let key in game.upgrades){
-    game.upgrades[key].unlocked = true;
-  }
-  buildShop();
-  updateUI();
-}
-
-/* ================== TOGGLE DEBUG MODE ================== */
-document.addEventListener("keydown", (e)=>{
-  if(e.key.toLowerCase() === "n"){  // appui sur T
-    const panel = document.getElementById("debugPanel");
-    panel.style.display = (panel.style.display === "none" ? "block" : "none");
-  }
-});
 /* ================== INVESTISSEMENTS ================== */
 function buildInvest() {
   const invest = document.getElementById("investContent");
@@ -981,14 +1013,6 @@ setInterval(() => {
 }, 5000);
 
   </script>
- <!-- ================== DEBUG MODE ================== -->
-<div id="debugPanel" style="display:none;">
-  <h3>⚙️ Debug Mode</h3>
-  <button onclick="addMinerais(1000)">+1K Minerais</button>
-  <button onclick="addMinerais(1000000)">+1M Minerais</button>
-  <button onclick="addPrestige()">+1 Prestige</button>
-  <button onclick="unlockAllUpgrades()">Débloquer améliorations</button>
-</div>
 
 </body>
 </html>

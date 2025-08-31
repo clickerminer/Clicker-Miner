@@ -211,7 +211,7 @@ document.getElementById("saveBtn").addEventListener("click", saveGame);
 document.getElementById("resetBtn").addEventListener("click", resetGame);
 
 /* ================== AUTO-SAVE ================== */
-setInterval(saveGame, 60000);
+setInterval(saveGame, 120000);
 
     /* ================== OUTILS ================== */
     function clamp(v,min,max){ return Math.max(min, Math.min(max, v)); }
@@ -394,23 +394,38 @@ function buildForge(){
 }
 
     /* ================== CLIC ================== */
-    document.getElementById("pickaxe").addEventListener("click", ()=>{
-      const base = perClickBase();
-      let gain = base;
+// Anti-autoclicker variables
+let clickTimestamps = [];
 
-      const critChance = clamp(game.forge.crit.count * 2, 0, 20);
-      const rareChance = clamp(game.forge.rare.count * 1, 0, 10);
+document.getElementById("pickaxe").addEventListener("click", ()=>{
+  const now = Date.now();
 
-      if(Math.random()*100 < critChance) gain *= 3;
-      if(Math.random()*100 < rareChance) gain *= 5;
+  // On garde seulement les clics de la dernière seconde
+  clickTimestamps = clickTimestamps.filter(ts => now - ts < 1000);
+  clickTimestamps.push(now);
 
-      game.cookies += gain;
-      game.totalCoins += gain;
-      game.totalClicks = (game.totalClicks || 0) + 1;
-      recalcLevel();
-      checkAchievements();
-      updateUI();
-    });
+  if(clickTimestamps.length > 20){
+    // Trop de clics → on ignore ce clic
+    console.warn("⛔ Anti-autoclick activé : trop de clics !");
+    return;
+  }
+
+  const base = perClickBase();
+  let gain = base;
+
+  const critChance = clamp(game.forge.crit.count * 2, 0, 20);
+  const rareChance = clamp(game.forge.rare.count * 1, 0, 10);
+
+  if(Math.random()*100 < critChance) gain *= 3;
+  if(Math.random()*100 < rareChance) gain *= 5;
+
+  game.cookies += gain;
+  game.totalCoins += gain;
+  game.totalClicks = (game.totalClicks || 0) + 1;
+  recalcLevel();
+  checkAchievements();
+  updateUI();
+});
 
     /* ================== TABS ================== */
     document.querySelectorAll(".tab-btn").forEach(btn=>{

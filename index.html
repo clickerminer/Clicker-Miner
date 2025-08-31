@@ -175,7 +175,8 @@ function calcAchievementsMultiplier() {
       {key:"stone",   name:"Pioche en pierre",  power:2,  color:"#444",   price:10000},
       {key:"iron",    name:"Pioche en fer",     power:5,  color:"#bbb",   price:50000},
       {key:"gold",    name:"Pioche en or",      power:9,  color:"gold",   price:150000},
-      {key:"diamond", name:"Pioche en diamant", power:15, color:"#7fd6ff",price:500000}
+      {key:"diamond", name:"Pioche en diamant", power:15, color:"#7fd6ff",price:500000},
+      {key:"rubis", name:"Pioche en rubis", power:25, color:"red",price:1000000}
     ];
   game.totalClicks = (game.totalClicks || 0) + 1;
 
@@ -243,14 +244,19 @@ setInterval(saveGame, 120000);
       game.cps += up.cps;
 
       // Déblocages à 5
-      if(key==="bonnepioche" && up.count>=5) game.upgrades.mine.unlocked = true;
-      if(key==="mine"        && up.count>=5) game.upgrades.foreuse.unlocked = true;
-      if(key==="foreuse"     && up.count>=5) game.upgrades.ouvrier.unlocked = true;
-      if(key==="ouvrier"     && up.count>=5) game.upgrades.tnt.unlocked = true;
-      if(key==="tnt"         && up.count>=5) game.upgrades.nain.unlocked = true;
-      if(key==="nain"        && up.count>=5) game.upgrades.grossetnt.unlocked = true;      
-      if(key==="grossetnt"   && up.count>=5) game.upgrades.exosquelette.unlocked = true;   
-      if(key==="exosquelette"&& up.count>=5) game.upgrades.foreuselaser.unlocked = true;
+if(key==="bonnepioche"   && up.count>=5) game.upgrades.mine.unlocked = true;
+if(key==="mine"          && up.count>=5) game.upgrades.foreuse.unlocked = true;
+if(key==="foreuse"       && up.count>=5) game.upgrades.ouvrier.unlocked = true;
+if(key==="ouvrier"       && up.count>=5) game.upgrades.tnt.unlocked = true;
+if(key==="tnt"           && up.count>=5) game.upgrades.nain.unlocked = true;
+if(key==="nain"          && up.count>=5) game.upgrades.grossetnt.unlocked = true;      
+if(key==="grossetnt"     && up.count>=5) game.upgrades.exosquelette.unlocked = true;   
+if(key==="exosquelette"  && up.count>=5) game.upgrades.foreuselaser.unlocked = true;
+if(key==="foreuselaser"  && up.count>=5) game.upgrades.golem.unlocked = true;
+if(key==="golem"         && up.count>=5) game.upgrades.drillnuke.unlocked = true;
+if(key==="drillnuke"     && up.count>=5) game.upgrades.army.unlocked = true;
+if(key==="army"          && up.count>=5) game.upgrades.divinepick.unlocked = true;
+if(key==="divinepick"    && up.count>=5) game.upgrades.divinepick.unlocked = true;
 
 
       // Nouvelle formule de prix progressive
@@ -553,7 +559,8 @@ const allAchievements = {
     "Pioche en pierre",
     "Pioche en fer",
     "Pioche en or",
-    "Pioche en diamant"
+    "Pioche en diamant",
+    "Pioche en rubis"
   ],
   "Prestige": [
     "Prestige II",
@@ -617,6 +624,7 @@ function checkAchievements(){
   if(game.pickaxe.type==="iron")    unlockAchievement("Pioche en fer");
   if(game.pickaxe.type==="gold")    unlockAchievement("Pioche en or");
   if(game.pickaxe.type==="diamond") unlockAchievement("Pioche en diamant");
+  if(game.pickaxe.type==="rubis") unlockAchievement("Pioche en rubis");
 
   // Prestige
   if(game.prestige >= 2)  unlockAchievement("Prestige II");
@@ -697,6 +705,7 @@ function renderAchievementsList(){
     case "Pioche en fer":    li.style.color = "#bbb"; break;     // argenté
     case "Pioche en or":     li.style.color = "gold"; break;     // doré
     case "Pioche en diamant":li.style.color = "#7fd6ff"; break;  // bleu diamant
+      case "Pioche en rubis":li.style.color = "#red"; break;  // rouge rubis
     default: li.style.color = "limegreen"; // ✅ vert par défaut
       case "Succès Suprême": li.style.color = "green"; break; // ✨ spécial
 

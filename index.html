@@ -571,7 +571,11 @@ const allAchievements = {
     "50M Minerais",
     "100M Minerais",
     "200M Minerais",
-    "500M Minerais"
+    "500M Minerais",
+    "1B Minerais",
+    "100B Minerais",
+    "500B Minerais",
+    "1T Minerais"
   ],
   "Pioches": [
     "Pioche en pierre",
@@ -585,19 +589,24 @@ const allAchievements = {
     "Prestige V",
     "Prestige X",
     "Prestige XX",
-    "Prestige L"
+    "Prestige L",
+    "Prestige C",
+    "Prestige D"
   ],
   "Niveaux": [
     "niveau 200",
     "niveau 300",
     "niveau 500",
-    "niveau 1000"
+    "niveau 1000",
+    "niveau 5000",
+    "niveau 10000"
   ],
   "Production (CPS)": [
     "1K CPS",
     "10K CPS",
     "50K CPS",
-    "100K CPS"
+    "100K CPS",
+    "500K CPS"
   ],
   "Cliques": [
     "1K Clics",
@@ -635,6 +644,10 @@ function checkAchievements(){
   if(game.totalCoins >= 100_000_000)  unlockAchievement("100M Minerais");
   if(game.totalCoins >= 200_000_000)  unlockAchievement("200M Minerais");
   if(game.totalCoins >= 500_000_000)  unlockAchievement("500M Minerais");
+  if(game.totalCoins >= 1_000_000_000)  unlockAchievement("1B Minerais");
+  if(game.totalCoins >= 100_000_000_000)  unlockAchievement("100B Minerais");
+  if(game.totalCoins >= 500_000_000_000)  unlockAchievement("500B Minerais");
+  if(game.totalCoins >= 1_000_000_000_000)  unlockAchievement("1T Minerais");
 
   // Pioches
   if(game.pickaxe.type==="stone")    unlockAchievement("Pioche en pierre");
@@ -649,18 +662,23 @@ function checkAchievements(){
   if(game.prestige >= 10)  unlockAchievement("Prestige X");
   if(game.prestige >= 20)  unlockAchievement("Prestige XX");
   if(game.prestige >= 50)  unlockAchievement("Prestige L");
+  if(game.prestige >= 100)  unlockAchievement("Prestige C");
+  if(game.prestige >= 500)  unlockAchievement("Prestige D");
 
   // Niveaux
   if(game.level >= 200)    unlockAchievement("niveau 200");
   if(game.level >= 300)    unlockAchievement("niveau 300");
   if(game.level >= 500)    unlockAchievement("niveau 500");
   if(game.level >= 1000)   unlockAchievement("niveau 1000");
+  if(game.level >= 5000)   unlockAchievement("niveau 5000");
+  if(game.level >= 10000)   unlockAchievement("niveau 10000");
 
   // CPS
   if(game.cps >=1000)      unlockAchievement("1K CPS");
   if(game.cps >=10000)     unlockAchievement("10K CPS");
   if(game.cps >=50000)     unlockAchievement("50K CPS");
   if(game.cps >=100000)    unlockAchievement("100K CPS");
+  if(game.cps >=500000)    unlockAchievement("500K CPS");
 
   // 🖱️ Succès clics
   if(game.totalClicks >= 1000)       unlockAchievement("1K Clics");

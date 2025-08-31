@@ -189,10 +189,12 @@ function calcAchievementsMultiplier() {
     ];
   game.totalClicks = (game.totalClicks || 0) + 1;
 
-    /* ================== SAUVEGARDE ================== */
-function saveGame(){
+   /* ================== SAUVEGARDE ================== */
+function saveGame(manual = false){
   localStorage.setItem("clickerMinerSave", JSON.stringify(game));
-  alert("✅ Sauvegarde effectuée !");
+  if(manual){
+    alert("✅ Sauvegarde effectuée !");
+  }
 }
 
 function loadGame(){
@@ -217,11 +219,11 @@ function resetGame(){
 }
 
 /* ================== BOUTONS ================== */
-document.getElementById("saveBtn").addEventListener("click", saveGame);
+document.getElementById("saveBtn").addEventListener("click", ()=>saveGame(true));
 document.getElementById("resetBtn").addEventListener("click", resetGame);
 
 /* ================== AUTO-SAVE ================== */
-setInterval(saveGame, 120000);
+setInterval(()=>saveGame(false), 120000); // 2 min
 
     /* ================== OUTILS ================== */
     function clamp(v,min,max){ return Math.max(min, Math.min(max, v)); }
@@ -748,9 +750,9 @@ function renderAchievementsList(){
 // ⚡ Affiche la liste au démarrage
 renderAchievementsList();
 
-   /* ================== Mise à jour dynamique du texte Prestige ================== */
+  /* ================== Mise à jour dynamique du texte Prestige ================== */
 function updatePrestigeUI(){
-  const requiredLevel = Math.floor(100 * Math.pow(1.5, game.prestige)); // niveau requis dynamique
+  const requiredLevel = Math.floor(100 * Math.pow(1.3, game.prestige)); // niveau requis dynamique
   document.getElementById("prestigeReqText").textContent = "Niveau requis : " + requiredLevel;
   document.getElementById("prestigeCostText").textContent = "Coût : " + formatNumber(game.prestigeCost) + " minerais";
 }
@@ -758,7 +760,7 @@ function updatePrestigeUI(){
 
 /* ================== PRESTIGE ================== */
 document.getElementById("prestigeBtn").addEventListener("click", ()=>{
-  const requiredLevel = Math.floor(100 * Math.pow(1.5, game.prestige)); // palier dynamique
+  const requiredLevel = Math.floor(100 * Math.pow(1.3, game.prestige)); // palier dynamique corrigé
   const canPrestige = (game.level >= requiredLevel && game.totalCoins >= game.prestigeCost);
   if(!canPrestige) return;
 
@@ -772,8 +774,8 @@ document.getElementById("prestigeBtn").addEventListener("click", ()=>{
   game.cps = 0;
   game.level = 1;
 
-  // 🔥 Augmentation du coût du prestige (x2 à chaque fois)
-  game.prestigeCost = Math.floor(game.prestigeCost * 2);
+  // 🔥 Augmentation du coût du prestige (x1.3 à chaque fois)
+  game.prestigeCost = Math.floor(game.prestigeCost * 1.3);
 
   // Reset boutique
   for(const key in game.upgrades){

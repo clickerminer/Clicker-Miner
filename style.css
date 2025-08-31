@@ -328,3 +328,22 @@ button:disabled { background: #999; cursor: not-allowed; }
   background: gray;
   cursor: not-allowed;
 }
+#saveControls {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+#saveControls button {
+  background: #333;
+  color: white;
+  border: 1px solid #666;
+  padding: 5px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+#saveControls button:hover {
+  background: #555;
+}

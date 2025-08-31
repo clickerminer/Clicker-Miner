@@ -33,7 +33,7 @@
   <div>Total : <span id="totalCoins">0</span></div>
   <div>⛏️ Par clic : <span id="perClick">1</span></div>
   <div>⚡ CPS : <span id="cps">0</span></div>
-  <div>📈 Niveau : <span id="level">1</span></div>
+  <div>🆙 Niveau : <span id="level">1</span></div>
   <div>🌟 Prestige : <span id="prestigeCount">0</span></div>
   <div>🔮 Multiplicateur : <span id="multiplier">1.00</span></div>
 </div>
@@ -84,8 +84,6 @@
       <span id="prestigeReqText">Niveau requis : 100</span><br>
       <span id="prestigeCostText">Coût : 1M minerais</span>
     </button>
-    <button id="saveBtn">💾 Sauvegarder</button>
-    <button id="reset">🔄 Réinitialiser</button>
   </div>
 </div>
 
@@ -108,6 +106,11 @@
   </div>
 </div>
 
+<div id="saveControls">
+  <button id="saveBtn">💾 Sauvegarder</button>
+  <button id="resetBtn">♻️ Réinitialiser</button>
+</div>
+
 
   <script>
     /* ================== ÉTAT DU JEU ================== */
@@ -118,6 +121,7 @@
       level: 1,
       prestige: 0,
       multiplier: 1.0,
+      totalClicks: 0,
       prestigeCost: 1000000,
       pickaxe: {type:"wood"},
       upgrades: {
@@ -129,7 +133,12 @@
         nain:        {key:"nain",        name:"Nain",         desc:"+70 cps.",  cps:70,  price:75000,count:0, unlocked:false},
         grossetnt:   {key:"grossetnt",   name:"Grosse TNT",   desc:"+90 cps.", cps:90, price:125000, count:0, unlocked:false},
         exosquelette:{key:"exosquelette",name:"Exosquelette", desc:"+200 cps.", cps:200, price:250000, count:0, unlocked:false},
-        foreuselaser:{key:"foreuselaser",name:"Foreuse laser",desc:"+500 cps.", cps:500, price:500000, count:0, unlocked:false}
+        foreuselaser:{key:"foreuselaser",name:"Foreuse laser",desc:"+500 cps.", cps:500, price:500000, count:0, unlocked:false},
+        golem:       {key:"golem",       name:"Golem de pierre",  desc:"+750 cps.",   cps:750,  price:1000000, count:0, unlocked:false},
+        drillnuke:   {key:"drillnuke",   name:"Drill nucléaire",  desc:"+1250 cps.",  cps:1250, price:1500000, count:0, unlocked:false},
+        army:        {key:"army",        name:"Armée de nains",   desc:"+2000 cps.",  cps:2000, price:2250000, count:0, unlocked:false},
+        divinepick:  {key:"divinepick",  name:"Pioche divine",    desc:"+3500 cps.",  cps:3500, price:4000000, count:0, unlocked:false}
+
 
       },
       forge: {
@@ -168,20 +177,41 @@ function calcAchievementsMultiplier() {
       {key:"gold",    name:"Pioche en or",      power:9,  color:"gold",   price:150000},
       {key:"diamond", name:"Pioche en diamant", power:15, color:"#7fd6ff",price:500000}
     ];
-  
+  game.totalClicks = (game.totalClicks || 0) + 1;
+
     /* ================== SAUVEGARDE ================== */
-    function saveGame(){
-      localStorage.setItem("clickerMinerSave", JSON.stringify(game));
-      alert("✅ Partie sauvegardée !");
-    }
-    function loadGame(){
-      try{
-        const raw = localStorage.getItem("clickerMinerSave");
-        if(!raw) return;
-        const saved = JSON.parse(raw);
-        Object.assign(game, saved);
-      }catch(e){ console.warn("Load error", e); }
-    }
+function saveGame(){
+  localStorage.setItem("clickerMinerSave", JSON.stringify(game));
+  alert("✅ Sauvegarde effectuée !");
+}
+
+function loadGame(){
+  const save = localStorage.getItem("clickerMinerSave");
+  if(save){
+    game = JSON.parse(save);
+
+    // ⚡ remet à jour l’affichage
+    buildShop();
+    buildForge();
+    buildInvest();
+    updateUI();
+    updatePrestigeUI();
+  }
+}
+
+function resetGame(){
+  if(confirm("⚠️ Es-tu sûr de vouloir réinitialiser ta partie ?")){
+    localStorage.removeItem("clickerMinerSave");
+    location.reload();
+  }
+}
+
+/* ================== BOUTONS ================== */
+document.getElementById("saveBtn").addEventListener("click", saveGame);
+document.getElementById("resetBtn").addEventListener("click", resetGame);
+
+/* ================== AUTO-SAVE ================== */
+setInterval(saveGame, 60000);
 
     /* ================== OUTILS ================== */
     function clamp(v,min,max){ return Math.max(min, Math.min(max, v)); }
@@ -222,6 +252,7 @@ function calcAchievementsMultiplier() {
       if(key==="grossetnt"   && up.count>=5) game.upgrades.exosquelette.unlocked = true;   
       if(key==="exosquelette"&& up.count>=5) game.upgrades.foreuselaser.unlocked = true;
 
+
       // Nouvelle formule de prix progressive
       const baseIncrease = 1.15; 
       const dynamicMultiplier = baseIncrease + (up.count * 0.01); 
@@ -232,6 +263,7 @@ function calcAchievementsMultiplier() {
     });
     shop.appendChild(div);
   }
+
 }
 
     /* ================== FORGE ================== */
@@ -240,7 +272,7 @@ function buildForge(){
   document.getElementById("oreDisplayForge").textContent = "💎 Minerais: " + formatNumber(game.cookies);
   forge.innerHTML = "";
 
-  // Critique
+  // Coup Critique
   const crit = game.forge.crit;
   const critChance = clamp(crit.count * 2, 0, 20);
   const divCrit = document.createElement("div");
@@ -262,7 +294,7 @@ function buildForge(){
   });
   forge.appendChild(divCrit);
 
-  // Minerai rare
+  // Minerai Rare
   const rare = game.forge.rare;
   const rareChance = clamp(rare.count * 1, 0, 10);
   const divRare = document.createElement("div");
@@ -284,9 +316,55 @@ function buildForge(){
   });
   forge.appendChild(divRare);
 
+  // 🔥 Durcissement du métal (NOUVEAU)
+  if(!game.forge.metal) game.forge.metal = {name:"Durcissement du métal",desc:"+2% de CPS global par niveau", price:50000, count:0};
+  const metal = game.forge.metal;
+  const divMetal = document.createElement("div");
+  divMetal.className = "upgrade";
+  divMetal.innerHTML = `
+    <strong>${metal.name}</strong><br>
+    <small>${metal.desc}</small><br>
+    Prix: ${formatNumber(metal.price)}<br>
+    Niveau: ${metal.count}/50<br>
+    <button ${game.cookies<metal.price || metal.count>=50 ? "disabled":""}>Améliorer</button>
+  `;
+  divMetal.querySelector("button").addEventListener("click", ()=>{
+    if(game.cookies < metal.price || metal.count>=50) return;
+    game.cookies -= metal.price;
+    metal.count++;
+    game.cps *= 1.02; // +2% CPS
+    metal.price = Math.floor(metal.price * 1.3);
+    buildForge();
+    updateUI();
+  });
+  forge.appendChild(divMetal);
+
+  // ⚡ Double affûtage (NOUVEAU)
+  if(!game.forge.affutage) game.forge.affutage = {name:"Double affûtage",desc:"+5% par clic", price:150000, count:0};
+  const aff = game.forge.affutage;
+  const divAff = document.createElement("div");
+  divAff.className = "upgrade";
+  divAff.innerHTML = `
+    <strong>${aff.name}</strong><br>
+    <small>${aff.desc}</small><br>
+    Prix: ${formatNumber(aff.price)}<br>
+    Niveau: ${aff.count}/40<br>
+    <button ${game.cookies<aff.price || aff.count>=40 ? "disabled":""}>Améliorer</button>
+  `;
+  divAff.querySelector("button").addEventListener("click", ()=>{
+    if(game.cookies < aff.price || aff.count>=40) return;
+    game.cookies -= aff.price;
+    aff.count++;
+    game.multiplier *= 1.05; // +5% clics
+    aff.price = Math.floor(aff.price * 1.4);
+    buildForge();
+    updateUI();
+  });
+  forge.appendChild(divAff);
+
   // ================== Pioche Upgrade ==================
   let pickaxeDiv = document.createElement("div");
-pickaxeDiv.className = "upgrade pickaxe-upgrade";
+  pickaxeDiv.className = "upgrade pickaxe-upgrade";
 
   const pickaxeStages = pickaxes.slice(1); // on saute bois
 
@@ -328,6 +406,7 @@ pickaxeDiv.className = "upgrade pickaxe-upgrade";
 
       game.cookies += gain;
       game.totalCoins += gain;
+      game.totalClicks = (game.totalClicks || 0) + 1;
       recalcLevel();
       checkAchievements();
       updateUI();
@@ -447,7 +526,13 @@ const allAchievements = {
     "1M Minerais",
     "5M Minerais",
     "10M Minerais",
-    "20M Minerais"
+    "20M Minerais",
+    "50M Minerais",
+    "100M Minerais",
+    "200M Minerais",
+    "500M Minerais"
+
+
   ],
   "Pioches": [
     "Pioche en pierre",
@@ -458,20 +543,35 @@ const allAchievements = {
   "Prestige": [
     "Prestige II",
     "Prestige V",
-    "Prestige X"
+    "Prestige X",
+    "Prestige XX",
+    "Prestige L"
   ],
   "Niveaux": [
     "niveau 200",
-    "niveau 300"
+    "niveau 300",
+    "niveau 500",
+    "niveau 1000"
   ],
   "Production (CPS)": [
     "1K CPS",
     "10K CPS",
-    "50K CPS"
+    "50K CPS",
+    "100K CPS"
   ],
+  "Cliques": [
+  "1K Clics",
+  "10K Clics",
+  "100K Clics",
+  "1M Clics",
+  "10M Clics",
+  "100M Clics"
+],
   "Secrets": [
-    "Easter Egg"
+    "Easter Egg",
+    "Succès Suprême"
   ]
+
 };
 
 function unlockAchievement(name){
@@ -492,6 +592,10 @@ function checkAchievements(){
   if(game.totalCoins >= 5_000_000)   unlockAchievement("5M Minerais");
   if(game.totalCoins >= 10_000_000)  unlockAchievement("10M Minerais");
   if(game.totalCoins >= 20_000_000)  unlockAchievement("20M Minerais");
+  if(game.totalCoins >= 50_000_000)  unlockAchievement("50M Minerais");
+  if(game.totalCoins >= 100_000_000)  unlockAchievement("100M Minerais");
+  if(game.totalCoins >= 200_000_000)  unlockAchievement("200M Minerais");
+  if(game.totalCoins >= 500_000_000)  unlockAchievement("500M Minerais");
 
   // Pioches
   if(game.pickaxe.type==="stone")   unlockAchievement("Pioche en pierre");
@@ -503,15 +607,44 @@ function checkAchievements(){
   if(game.prestige >= 2)  unlockAchievement("Prestige II");
   if(game.prestige >= 5)  unlockAchievement("Prestige V");
   if(game.prestige >= 10) unlockAchievement("Prestige X");
+  if(game.prestige >= 20) unlockAchievement("Prestige XX");
+  if(game.prestige >= 50) unlockAchievement("Prestige L");
 
   // Niveaux
   if(game.level >= 200) unlockAchievement("niveau 200");
   if(game.level >= 300) unlockAchievement("niveau 300");
+  if(game.level >= 500) unlockAchievement("niveau 500");
+  if(game.level >= 1000) unlockAchievement("niveau 1000");
 
   // CPS
   if(game.cps >=1000)  unlockAchievement("1K CPS");
   if(game.cps >=10000) unlockAchievement("10K CPS");
   if(game.cps >=50000) unlockAchievement("50K CPS");
+  if(game.cps >=100000) unlockAchievement("100K CPS");
+
+  // 🖱️ Succès clics
+if(game.totalClicks >= 1000)    unlockAchievement("1K Clics");
+if(game.totalClicks >= 10000)   unlockAchievement("10K Clics");
+if(game.totalClicks >= 100000)  unlockAchievement("100K Clics");
+if(game.totalClicks >= 1000000) unlockAchievement("1M Clics");
+if(game.totalClicks >= 10000000) unlockAchievement("10M Clics");
+if(game.totalClicks >= 100000000) unlockAchievement("100M Clics");
+
+   // 🎯 Vérifie si tous les succès sont obtenus (sauf le Suprême lui-même)
+let allDone = true;
+for(const category in allAchievements){
+  allAchievements[category].forEach(name=>{
+    if(name !== "Succès Suprême" && !game.achievements.includes(name)){
+      allDone = false;
+    }
+  });
+}
+
+if(allDone){
+  unlockAchievement("Succès Suprême");
+}
+
+
 }
 
 // Easter egg : clic sur l’icône du titre
@@ -541,11 +674,23 @@ function renderAchievementsList(){
       } else {
         li.textContent = name;
         if(game.achievements.includes(name)){
-          li.style.color = "limegreen"; // ✅ débloqué
-          li.style.fontWeight = "bold";
-        } else {
-          li.style.color = "lightgray"; // ❌ pas encore
-        }
+  li.style.fontWeight = "bold";
+
+  // 🎨 couleur spéciale pour les pioches
+  switch(name){
+    case "Pioche en pierre": li.style.color = "#888"; break;     // gris pierre
+    case "Pioche en fer":    li.style.color = "#bbb"; break;     // argenté
+    case "Pioche en or":     li.style.color = "gold"; break;     // doré
+    case "Pioche en diamant":li.style.color = "#7fd6ff"; break;  // bleu diamant
+    default: li.style.color = "limegreen"; // ✅ vert par défaut
+      case "Succès Suprême": li.style.color = "gold"; break; // ✨ spécial
+
+  }
+
+} else {
+  li.style.color = "lightgray"; // ❌ pas encore
+}
+
       }
 
       ul.appendChild(li);
@@ -562,16 +707,7 @@ function updatePrestigeUI(){
 }
 
 
-/* ================== PRESTIGE (boutons) ================== */
-document.getElementById("saveBtn").addEventListener("click", saveGame);
-
-document.getElementById("reset").addEventListener("click", ()=>{
-  if(confirm("⚠️ Effacer toute la progression ?")){
-    localStorage.removeItem("clickerMinerSave");
-    location.reload();
-  }
-});
-
+/* ================== PRESTIGE ================== */
 document.getElementById("prestigeBtn").addEventListener("click", ()=>{
   const requiredLevel = Math.floor(100 * Math.pow(1.5, game.prestige)); // palier dynamique
   const canPrestige = (game.level >= requiredLevel && game.totalCoins >= game.prestigeCost);
@@ -587,13 +723,15 @@ document.getElementById("prestigeBtn").addEventListener("click", ()=>{
   game.cps = 0;
   game.level = 1;
 
-  // 🔥 Augmentation du coût du prestige (x1.5 à chaque fois)
-  game.prestigeCost = Math.floor(game.prestigeCost * 1.5);
+  // 🔥 Augmentation du coût du prestige (x2 à chaque fois)
+  game.prestigeCost = Math.floor(game.prestigeCost * 2);
 
-  // Reset boutique, forge, pioche comme tu l’as déjà
+  // Reset boutique
   for(const key in game.upgrades){
     game.upgrades[key].count = 0;
     game.upgrades[key].unlocked = (key === "bonnepioche");
+
+    // prix de base de chaque amélioration
     if(key === "bonnepioche") game.upgrades[key].price = 20;
     if(key === "mine") game.upgrades[key].price = 200;
     if(key === "foreuse") game.upgrades[key].price = 1000;
@@ -603,16 +741,33 @@ document.getElementById("prestigeBtn").addEventListener("click", ()=>{
     if(key === "grossetnt") game.upgrades[key].price = 125000;
     if(key === "exosquelette") game.upgrades[key].price = 250000;
     if(key === "foreuselaser") game.upgrades[key].price = 500000;
+    if(key === "golem") game.upgrades[key].price = 1000000;
+    if(key === "drillnuke") game.upgrades[key].price = 1500000;
+    if(key === "army") game.upgrades[key].price = 2250000;
+    if(key === "divinepick") game.upgrades[key].price = 4000000;
   }
+
+  // Reset forge
   game.forge.crit.count = 0; game.forge.crit.price = 5000;
   game.forge.rare.count = 0; game.forge.rare.price = 10000;
   game.forge.pickaxe.stage = 0;
+  if(game.forge.metal){ game.forge.metal.count = 0; game.forge.metal.price = 50000; }
+  if(game.forge.affutage){ game.forge.affutage.count = 0; game.forge.affutage.price = 150000; }
+
+  // Reset pioche
   game.pickaxe = {type:"wood"};
+
+  // Reset investissements (actions)
+  game.investments.forEach(inv=>{
+    inv.owned = 0;
+    inv.price = inv.basePrice; // retourne à son prix de départ
+  });
 
   // Mets à jour tout l’affichage
   recalcLevel();
   buildShop();
   buildForge();
+  buildInvest();
   updateUI();
   updatePrestigeUI(); // 👈 important pour changer le texte requis + coût
 });

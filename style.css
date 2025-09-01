@@ -7,7 +7,6 @@ body {
   background-size: cover;
   display: flex;
   overflow: hidden;
-  
 }
 
 /* Titre centré */
@@ -347,4 +346,87 @@ button:disabled { background: #999; cursor: not-allowed; }
 
 #saveControls button:hover {
   background: #555;
+}
+/* ================== CLASSEMENT ================== */
+#leaderboardTab {
+  padding: 20px;
+  background: #222;
+  border-radius: 8px;
+  color: #fff;
+}
+
+#leaderboardTab h2 {
+  text-align: center;
+  color: gold;
+  margin-bottom: 15px;
+  text-shadow: 0 0 8px rgba(255, 215, 0, 0.6);
+}
+
+#pseudoInput {
+  width: 60%;
+  padding: 8px;
+  margin-right: 10px;
+  border: none;
+  border-radius: 5px;
+}
+
+#pseudoBtn {
+  padding: 8px 12px;
+  background: #444;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+#pseudoBtn:hover {
+  background: #666;
+}
+
+#pseudoDisplay {
+  margin-top: 10px;
+  font-weight: bold;
+  color: limegreen;
+  text-align: center;
+}
+
+#leaderboardList {
+  list-style: none;
+  padding: 0;
+  margin-top: 20px;
+}
+
+#leaderboardList li {
+  background: #333;
+  margin: 6px 0;
+  padding: 8px 12px;
+  border-radius: 5px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: transform 0.2s;
+}
+
+#leaderboardList li:hover {
+  transform: scale(1.02);
+  background: #444;
+}
+
+#leaderboardList li span {
+  font-weight: bold;
+  color: #ffd700;
+}
+/* Onglet Classement en colonne */
+#leaderboardTab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+#leaderboardTab .pseudoBox {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 15px;
+  width: 100%;
 }

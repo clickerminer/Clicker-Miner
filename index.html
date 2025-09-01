@@ -17,6 +17,7 @@
     <button class="tab-btn" data-tab="casino">🎰 Casino</button>
     <button class="tab-btn" data-tab="prestigeTab">💎 Prestige</button>
     <button class="tab-btn" data-tab="investTab">📈 Investissements</button>
+     <button class="tab-btn" data-tab="classement">🏆 Classement</button>
   </div>
 
   <!-- Contenu -->
@@ -37,6 +38,7 @@
   <div>🌟 Prestige : <span id="prestigeCount">0</span></div>
   <div>🔮 Multiplicateur : <span id="multiplier">1.00</span></div>
 </div>
+
 
 
 <!-- Onglet Miner (vide maintenant, ou tu peux mettre un petit texte si tu veux) -->
@@ -87,6 +89,23 @@
   </div>
 </div>
 
+<div id="classement" class="tab-content" style="display:none;">
+  <h2>🏆 Classement</h2>
+
+  <!-- Formulaire pseudo -->
+  <div class="pseudoBox" id="pseudoBox">
+    <input id="pseudoInput" type="text" placeholder="Entrez votre pseudo">
+    <button id="pseudoBtn">Valider</button>
+  </div>
+
+  <!-- Affichage du pseudo -->
+  <p id="pseudoDisplay">Votre pseudo : (non défini)</p>
+
+  <!-- Liste du classement -->
+  <ul id="leaderboardList"></ul>
+</div>
+
+
   <!-- ================== DEBUG PANEL ================== -->
 <div id="debugPanel" style="display:none;">
   <h3>⚡ Debug Mode</h3>
@@ -131,6 +150,8 @@
       prestige: 0,
       multiplier: 1.0,
       totalClicks: 0,
+      pseudo: "",
+      inLeaderboard: true, // sert à exclure si debug
       prestigeCost: 1000000,
       pickaxe: {type:"wood"},
       upgrades: {
@@ -151,8 +172,8 @@
 
       },
       forge: {
-        crit:{name:"Coup Critique",desc:"2% par niveau (max 20%) → x3 au clic.", price:5000,  count:0},
-        rare:{name:"Minerai Rare", desc:"1% par niveau (max 10%) → x5 au clic.", price:10000, count:0},
+        crit:{name:"Coup Critique",desc:"2% par niveau (max 40%) → x3 au clic.", price:5000,  count:0},
+        rare:{name:"Minerai Rare", desc:"1% par niveau (max 20%) → x5 au clic.", price:10000, count:0},
         pickaxe:{stage:0}
       },
             achievements:[],
@@ -190,17 +211,18 @@ function calcAchievementsMultiplier() {
   game.totalClicks = (game.totalClicks || 0) + 1;
 
    /* ================== SAUVEGARDE ================== */
-function saveGame(manual = false){
+function saveGame(manual = false) {
   localStorage.setItem("clickerMinerSave", JSON.stringify(game));
-  if(manual){
-    alert("✅ Sauvegarde effectuée !");
-  }
+  if (manual) alert("✅ Sauvegarde effectuée !");
 }
 
-function loadGame(){
+function loadGame() {
   const save = localStorage.getItem("clickerMinerSave");
-  if(save){
+  if (save) {
     game = JSON.parse(save);
+
+    if (!game.pseudo) game.pseudo = "";
+    if (game.inLeaderboard === undefined) game.inLeaderboard = true;
 
     // ⚡ remet à jour l’affichage
     buildShop();
@@ -208,13 +230,37 @@ function loadGame(){
     buildInvest();
     updateUI();
     updatePrestigeUI();
+
+    // ✅ Mets à jour l’affichage du pseudo
+    updatePseudoUIFromGame();
   }
 }
 
-function resetGame(){
-  if(confirm("⚠️ Es-tu sûr de vouloir réinitialiser ta partie ?")){
+function resetGame() {
+  if (confirm("⚠️ Es-tu sûr de vouloir réinitialiser ta partie ?")) {
     localStorage.removeItem("clickerMinerSave");
     location.reload();
+  }
+}
+
+/* ================== DEBUG MODE ================== */
+function activateDebugMode() {
+  // ... ton code d’ouverture de panel
+  game.inLeaderboard = false; // ⛔ sort du classement
+  // 👉 Ici tu pourrais aussi supprimer du Firestore si besoin
+}
+
+/* ================== PSEUDO UI ================== */
+function updatePseudoUIFromGame() {
+  const pseudoBox = document.getElementById("pseudoBox");
+  const pseudoDisplay = document.getElementById("pseudoDisplay");
+
+  if (game.pseudo && game.pseudo.length > 0) {
+    if (pseudoBox) pseudoBox.style.display = "none"; // cache input + bouton
+    if (pseudoDisplay) pseudoDisplay.textContent = "Votre pseudo : " + game.pseudo;
+  } else {
+    if (pseudoBox) pseudoBox.style.display = "block"; // remet l’input si pas de pseudo
+    if (pseudoDisplay) pseudoDisplay.textContent = "Votre pseudo : (non défini)";
   }
 }
 
@@ -283,26 +329,31 @@ if(key==="divinepick"    && up.count>=5) game.upgrades.divinepick.unlocked = tru
 
 }
 
-    /* ================== FORGE ================== */
+  /* ================== FORGE ================== */
 function buildForge(){
   const forge = document.getElementById("forgeContent");
   document.getElementById("oreDisplayForge").textContent = "💎 Minerais: " + formatNumber(game.cookies);
   forge.innerHTML = "";
 
-  // Coup Critique
+  // --- sécurité : initialise forge si vide ---
+  if (!game.forge) game.forge = {};
+  if (!game.forge.pickaxe) game.forge.pickaxe = { stage: 0 };
+
+  // ================== Coup Critique ==================
+  if(!game.forge.crit) game.forge.crit = {name:"Coup critique", desc:"+2% chance critique", price:1000, count:0};
   const crit = game.forge.crit;
-  const critChance = clamp(crit.count * 2, 0, 20);
+  const critChance = clamp(crit.count * 2, 0, 40);
   const divCrit = document.createElement("div");
   divCrit.className = "upgrade";
   divCrit.innerHTML = `
     <strong>${crit.name}</strong><br>
     <small>${crit.desc} (Actuel: ${critChance}%)</small><br>
     Prix: ${formatNumber(crit.price)}<br>
-    Niveau: ${crit.count}<br>
-    <button ${game.cookies<crit.price || critChance>=20 ? "disabled":""}>Améliorer</button>
+    Niveau: ${crit.count}/40<br>
+    <button ${game.cookies<crit.price || crit.count>=40 ? "disabled":""}>Améliorer</button>
   `;
   divCrit.querySelector("button").addEventListener("click", ()=>{
-    if(game.cookies < crit.price || critChance>=20) return;
+    if(game.cookies < crit.price || crit.count>=40) return;
     game.cookies -= crit.price;
     crit.count++;
     crit.price = Math.floor(crit.price * 1.5);
@@ -311,20 +362,21 @@ function buildForge(){
   });
   forge.appendChild(divCrit);
 
-  // Minerai Rare
+  // ================== Minerai Rare ==================
+  if(!game.forge.rare) game.forge.rare = {name:"Minerai rare", desc:"+1% chance minerai rare", price:5000, count:0};
   const rare = game.forge.rare;
-  const rareChance = clamp(rare.count * 1, 0, 10);
+  const rareChance = clamp(rare.count * 1, 0, 20);
   const divRare = document.createElement("div");
   divRare.className = "upgrade";
   divRare.innerHTML = `
     <strong>${rare.name}</strong><br>
     <small>${rare.desc} (Actuel: ${rareChance}%)</small><br>
     Prix: ${formatNumber(rare.price)}<br>
-    Niveau: ${rare.count}<br>
-    <button ${game.cookies<rare.price || rareChance>=10 ? "disabled":""}>Améliorer</button>
+    Niveau: ${rare.count}/20<br>
+    <button ${game.cookies<rare.price || rare.count>=20 ? "disabled":""}>Améliorer</button>
   `;
   divRare.querySelector("button").addEventListener("click", ()=>{
-    if(game.cookies < rare.price || rareChance>=10) return;
+    if(game.cookies < rare.price || rare.count>=20) return;
     game.cookies -= rare.price;
     rare.count++;
     rare.price = Math.floor(rare.price * 1.5);
@@ -333,7 +385,7 @@ function buildForge(){
   });
   forge.appendChild(divRare);
 
-  // 🔥 Durcissement du métal (NOUVEAU)
+  // ================== Durcissement du métal ==================
   if(!game.forge.metal) game.forge.metal = {name:"Durcissement du métal",desc:"+2% de CPS global par niveau", price:50000, count:0};
   const metal = game.forge.metal;
   const divMetal = document.createElement("div");
@@ -356,7 +408,7 @@ function buildForge(){
   });
   forge.appendChild(divMetal);
 
-  // ⚡ Double affûtage (NOUVEAU)
+  // ================== Double affûtage ==================
   if(!game.forge.affutage) game.forge.affutage = {name:"Double affûtage",desc:"+5% par clic", price:150000, count:0};
   const aff = game.forge.affutage;
   const divAff = document.createElement("div");
@@ -365,11 +417,11 @@ function buildForge(){
     <strong>${aff.name}</strong><br>
     <small>${aff.desc}</small><br>
     Prix: ${formatNumber(aff.price)}<br>
-    Niveau: ${aff.count}/40<br>
-    <button ${game.cookies<aff.price || aff.count>=40 ? "disabled":""}>Améliorer</button>
+    Niveau: ${aff.count}/20<br>
+    <button ${game.cookies<aff.price || aff.count>=20 ? "disabled":""}>Améliorer</button>
   `;
   divAff.querySelector("button").addEventListener("click", ()=>{
-    if(game.cookies < aff.price || aff.count>=40) return;
+    if(game.cookies < aff.price || aff.count>=20) return;
     game.cookies -= aff.price;
     aff.count++;
     game.multiplier *= 1.05; // +5% clics
@@ -380,10 +432,10 @@ function buildForge(){
   forge.appendChild(divAff);
 
   // ================== Pioche Upgrade ==================
-  let pickaxeDiv = document.createElement("div");
+  const pickaxeDiv = document.createElement("div");
   pickaxeDiv.className = "upgrade pickaxe-upgrade";
 
-  const pickaxeStages = pickaxes.slice(1); // on saute bois
+  const pickaxeStages = pickaxes.slice(1); // saute pioche bois
 
   if(game.forge.pickaxe.stage < pickaxeStages.length){
     let next = pickaxeStages[game.forge.pickaxe.stage];
@@ -444,17 +496,30 @@ document.getElementById("pickaxe").addEventListener("click", ()=>{
   updateUI();
 });
 
-    /* ================== TABS ================== */
-    document.querySelectorAll(".tab-btn").forEach(btn=>{
-      btn.addEventListener("click",()=>{
-        document.querySelectorAll(".tab-btn").forEach(b=>b.classList.remove("active"));
-        btn.classList.add("active");
-        document.querySelectorAll(".tab-content").forEach(div=>div.classList.remove("active-tab"));
-        document.getElementById(btn.dataset.tab).classList.add("active-tab");
+    
+/* ================== TABS ================== */
+document.querySelectorAll(".tab-btn").forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    // Désactive tous les onglets
+    document.querySelectorAll(".tab-btn").forEach(b=>b.classList.remove("active"));
+    btn.classList.add("active");
 
-            if (btn.dataset.tab === "investTab") { buildInvest(); }
-      });
-    });
+    // Cache tout le contenu
+    document.querySelectorAll(".tab-content").forEach(div=>div.style.display="none");
+
+    // Montre seulement le bon onglet
+    const target = document.getElementById(btn.dataset.tab);
+    if (target) target.style.display = "block";
+
+    // Cas spéciaux
+    if (btn.dataset.tab === "investTab") buildInvest();
+    if (btn.dataset.tab === "classement") loadLeaderboard(); // recharge le classement
+  });
+});
+
+// Onglet par défaut = Miner
+document.querySelectorAll(".tab-content").forEach(div=>div.style.display="none");
+document.getElementById("miner").style.display = "block";
 
  // ================== CASINO ==================
 document.getElementById("betBtn").addEventListener("click", ()=>{
@@ -499,6 +564,20 @@ document.getElementById("betBtn").addEventListener("click", ()=>{
   updateUI();
 });
 
+// ================== DEBUG MODE ==================
+function activateDebugMode(){
+  const panel = document.getElementById("debugPanel");
+  if(panel) panel.style.display = "block";   // affiche le panneau
+  game.inLeaderboard = false;                // 🚫 retire du classement
+}
+
+// 🔒 Fermeture avec N
+document.addEventListener("keydown", (e)=>{
+  if(e.key.toLowerCase() === "n"){
+    const panel = document.getElementById("debugPanel");
+    if(panel) panel.style.display = "none";
+  }
+});
 
     /* ================== UI & TICK ================== */
     function recalcLevel(){ game.level = Math.floor(Math.sqrt(game.totalCoins/100)) + 1; }
@@ -891,6 +970,12 @@ function debugAchievements(category){
     });
     updateUI();
   }
+  // Quand debug est activé
+function enableDebugMode(){
+  game.debugMode = true; // 🚫 exclut du classement
+  alert("⚠️ Debug mode activé. Tu es exclu du classement !");
+}
+
 }
 
     /* ================== DÉMARRAGE ================== */
@@ -900,6 +985,9 @@ function debugAchievements(category){
   updatePrestigeUI();
   setInterval(tick, 1000);
   buildInvest();   // 👈 ici
+  updateLeaderboard();
+  if (!game.pseudo) game.pseudo = "";
+if (game.inLeaderboard === undefined) game.inLeaderboard = true;
 });
 
 
@@ -1032,7 +1120,129 @@ setInterval(() => {
   });
 }, 5000);
 
-  </script>
+</script>
+<script type="module">
+  // === Import Firebase ===
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-analytics.js";
+  import { 
+    getFirestore, collection, setDoc, doc, getDocs, query, orderBy, deleteDoc 
+  } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
+
+  // === Configuration Firebase ===
+  const firebaseConfig = {
+    apiKey: "AIzaSyCbwh2LiYMIodVCdEaPcNEC5vg-oN9p7ZY",
+    authDomain: "clicker-miner.firebaseapp.com",
+    projectId: "clicker-miner",
+    storageBucket: "clicker-miner.firebasestorage.app",
+    messagingSenderId: "1033830475796",
+    appId: "1:1033830475796:web:fba1c697c6858cf29f9f01",
+    measurementId: "G-7XGL6MJDK3"
+  };
+
+  // === Initialisation ===
+  const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
+  const db = getFirestore(app);
+
+  // === SYNC LEADERBOARD ===
+  async function syncLeaderboard() {
+    if (!game.pseudo) return;
+
+    try {
+      if (!game.inLeaderboard) {
+        // 🚫 supprime du classement si debug
+        await deleteDoc(doc(db, "leaderboard", game.pseudo));
+        return;
+      }
+
+      // ✅ sinon on met à jour normalement
+      await setDoc(doc(db, "leaderboard", game.pseudo), {
+        pseudo: game.pseudo,
+        prestige: Math.floor(game.prestige),      // entier
+        totalCoins: Math.floor(game.totalCoins),  // entier
+        updatedAt: Date.now()
+      });
+    } catch (e) {
+      console.error("Sync leaderboard error:", e);
+    }
+  }
+
+  // === SYNC À CHAQUE SAUVEGARDE ===
+  const oldSaveGame = window.saveGame;
+  window.saveGame = function (manual = false) {
+    oldSaveGame(manual);
+    syncLeaderboard();
+  };
+
+  // === Bouton pseudo ===
+  document.getElementById("pseudoBtn").addEventListener("click", async () => {
+    const p = document.getElementById("pseudoInput").value.trim();
+    if (p.length < 3) {
+      alert("⚠️ Le pseudo doit avoir au moins 3 caractères !");
+      return;
+    }
+
+    // Vérifier si le pseudo existe déjà
+    const qs = await getDocs(collection(db, "leaderboard"));
+    let exists = false;
+    qs.forEach(snap => {
+      if (snap.id === p) exists = true;
+    });
+
+    if (exists) {
+      alert("⚠️ Ce pseudo est déjà utilisé, choisis-en un autre !");
+      return;
+    }
+
+    game.pseudo = p;
+    document.getElementById("pseudoDisplay").textContent = "Votre pseudo : " + p;
+    document.getElementById("pseudoBox").style.display = "none"; // cache le champ
+    saveGame(); // sauvegarde avec pseudo
+
+    await syncLeaderboard();
+    loadLeaderboard();
+  });
+
+  // === Charger le classement ===
+async function loadLeaderboard() {
+  const ul = document.getElementById("leaderboardList");
+  if (!ul) return;
+  ul.innerHTML = "Chargement...";
+
+  try {
+    const q = query(collection(db, "leaderboard"), orderBy("prestige", "desc"));
+    const qs = await getDocs(q);
+    ul.innerHTML = "";
+    let rank = 1;
+    qs.forEach(snap => {
+      const d = snap.data();
+      const li = document.createElement("li");
+      li.textContent = `#${rank++} ${d.pseudo} — Prestige : ${formatNumber(d.prestige)} — Minerais : ${formatNumber(d.totalCoins)}`;
+      ul.appendChild(li);
+    });
+  } catch (e) {
+    console.error(e);
+    ul.innerHTML = "Erreur de chargement du classement.";
+  }
+  function activateDebugMode() {
+  // ... ton code d’ouverture de panel
+  game.inLeaderboard = false; // ⛔ sort du classement
+  syncLeaderboard();          // ⚡ supprime direct du classement Firebase
+}
+
+}
+
+
+  // === AUTO REFRESH CLASSEMENT TOUTES LES 3s ===
+  setInterval(() => {
+    syncLeaderboard();   // ⚡ envoie les nouvelles valeurs du joueur
+    loadLeaderboard();   // ⚡ recharge le classement
+  }, 3000);
+
+  // === Charger au démarrage ===
+  loadLeaderboard();
+</script>
 
 </body>
 </html>

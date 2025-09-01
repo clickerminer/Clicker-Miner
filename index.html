@@ -1058,29 +1058,44 @@ div.querySelector(".sellAllBtn").addEventListener("click", () => {
   });
 }
 
-// Mise à jour automatique des prix (pile ou face 50/50)
+// Mise à jour automatique des prix (valeurs fixes selon l'investissement)
 setInterval(() => {
   game.investments.forEach(inv => {
-    let variation;
+    let variation = 0;
 
-    if (Math.random() < 0.5) {
-      // 50% de chance de monter : entre +0% et +5%
-      variation = Math.random() * 0.05;
-    } else {
-      // 50% de chance de descendre : entre -0% et -5%
-      variation = -(Math.random() * 0.05);
+    if (inv.name === "Mine locale") {
+      variation = Math.floor(Math.random() * 11) - 5;
+    } else if (inv.name === "Compagnie de foreuses") {
+      variation = Math.floor(Math.random() * 601) - 300;
+    } else if (inv.name === "Société TNT Mining") {
+      variation = Math.floor(Math.random() * 1601) - 800;
     }
 
-    // nouveau prix
-    let newPrice = Math.floor(inv.price * (1 + variation));
-
-    // empêche de descendre en dessous de 50% du prix de départ
+    let newPrice = inv.price + variation;
     newPrice = Math.max(inv.basePrice * 0.5, newPrice);
-
     inv.price = newPrice;
+
+    // --- Mise à jour des graphiques ---
+    const chart =
+      inv.name === "Mine locale" ? charts.mine :
+      inv.name === "Compagnie de foreuses" ? charts.foreuse :
+      charts.tnt;
+
+    chart.data.labels.push(""); // ajoute un label vide
+    chart.data.datasets[0].data.push(inv.price);
+
+    // ⚡ garder uniquement les 10 derniers points
+    if (chart.data.labels.length > 20) {
+      chart.data.labels.shift();
+      chart.data.datasets[0].data.shift();
+    }
+
+    chart.update();
   });
+
   buildInvest();
 }, 5000);
+
 
 
 // === Initialisation des graphes ===

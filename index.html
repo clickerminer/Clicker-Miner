@@ -210,7 +210,7 @@ function calcAchievementsMultiplier() {
     ];
   game.totalClicks = (game.totalClicks || 0) + 1;
 
-   /* ================== SAUVEGARDE ================== */
+  /* ================== SAUVEGARDE ================== */
 function saveGame(manual = false) {
   localStorage.setItem("clickerMinerSave", JSON.stringify(game));
   if (manual) alert("✅ Sauvegarde effectuée !");
@@ -224,15 +224,24 @@ function loadGame() {
     if (!game.pseudo) game.pseudo = "";
     if (game.inLeaderboard === undefined) game.inLeaderboard = true;
 
-    // ⚡ remet à jour l’affichage
+    // ✅ Réinitialise les prix des investissements sur basePrice
+    if (game.investments) {
+      game.investments.forEach(inv => {
+        if (inv.basePrice) inv.price = inv.basePrice;
+      });
+    }
+
+    // ⚡ Remet à jour l’affichage
     buildShop();
     buildForge();
     buildInvest();
     updateUI();
     updatePrestigeUI();
 
-    // ✅ Mets à jour l’affichage du pseudo
-    updatePseudoUIFromGame();
+    // ✅ Mets à jour l’affichage du pseudo si fonction dispo
+    if (typeof updatePseudoUIFromGame === "function") {
+      updatePseudoUIFromGame();
+    }
   }
 }
 
